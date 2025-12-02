@@ -1,0 +1,10 @@
+pybind_CHIC.cpp
+setup.py
+../bindings/pybind_CHIC.cpp
+../src/CHIC.cpp
+chic.egg-info/PKG-INFO
+chic.egg-info/SOURCES.txt
+chic.egg-info/dependency_links.txt
+chic.egg-info/not-zip-safe
+chic.egg-info/requires.txt
+chic.egg-info/top_level.txt
