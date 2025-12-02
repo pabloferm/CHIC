@@ -274,7 +274,7 @@ void CHICDIFF::_amplitude_derivative() {
 
 void CHICDIFF::dHs_drho() {
     dHs(0, 0) = flip * OptConstants::WEAK * Y_e;
-    dHs0.diagonal().array() -= flip * OptConstants::WEAK * Y_e * OptConstants::INV_3;
+    dHs.diagonal().array() -= flip * OptConstants::WEAK * Y_e * OptConstants::INV_3;
 }
 
 void CHICDIFF::dHs_ddm221() {

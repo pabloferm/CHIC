@@ -151,7 +151,6 @@ class CHICDIFF : public CHIC {
     const Eigen::Vector3d unit = Eigen::Vector3d::Ones(3);
 
     Eigen::Matrix3cd I_ijk;                 // Integral matrix
-    Eigen::Matrix3cd dHs0, dHs1;       // Derivative Hamiltonian
     Eigen::Matrix3cd comm_dHH, comm_dHH2;   // Commutator matrices
     Eigen::Matrix3cd dJ;              // Derivative amplitude matrix
     Eigen::Matrix3cd dHs;             // Derivative of reduced Hamiltonian
