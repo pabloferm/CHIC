@@ -1,7 +1,13 @@
+MANIFEST.in
 pybind_CHIC.cpp
 setup.py
 ../bindings/pybind_CHIC.cpp
 ../src/CHIC.cpp
+../src/CHIC.h
+../src/opt_constants.h
+/home/pablo/Pheno/CHIC/bindings/pybind_CHIC.cpp
+/home/pablo/Pheno/CHIC/bindings/../src/CHIC.cpp
+/home/pablo/Pheno/CHIC/src/CHIC.cpp
 chic.egg-info/PKG-INFO
 chic.egg-info/SOURCES.txt
 chic.egg-info/dependency_links.txt

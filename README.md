@@ -2,7 +2,7 @@
 
 # CHIC
 
-C++ project with Python bindings (pybind11) and tests for both C++ and Python components.
+C++ library for computing three/flavor neutrino oscillation probabilities and their derivatives.
 
 ## Structure
 
@@ -22,10 +22,14 @@ C++ project with Python bindings (pybind11) and tests for both C++ and Python co
 - For the CHIC library
 ```
 make clean
-make
+make 
+```
+or 
+```
+make lib
 ```
 
 - For the python bindings (optional)
 ```
-make python
+pip install ./bindings
 ```

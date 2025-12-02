@@ -1,7 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 #include <pybind11/stl.h>
-#include "../src/CHIC.h"  // Include your CHIC headers
+#include "CHIC.h"  // Include your CHIC headers
 
 namespace py = pybind11;
 using Matrix3d = Eigen::Matrix<double, 3, 3>; // Explicitly define Matrix3d
