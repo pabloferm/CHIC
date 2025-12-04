@@ -1,4 +1,4 @@
-![Alt text](docs/CHIC.png)
+<img src="docs/CHIC.png" width="200" />
 
 # CHIC
 
