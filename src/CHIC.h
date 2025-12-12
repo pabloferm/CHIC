@@ -17,8 +17,8 @@ class CHIC {
         double theta_23 = 0.8587019919812102,  // theta_23_deg = 49.2
         double theta_13 = 0.14957471689591406, // theta_13_deg = 8.57
         double delta_cp = 4.084070449666731,   // delta_cp_deg = 234
-        double dm2_21 = 7.42e-5,  // MeV^2/c^4
-        double dm2_31 = 2.51e-3,  // MeV^2/c^4
+        double dm2_21 = 7.42e-5,  // eV^2/c^4
+        double dm2_31 = 2.51e-3,  // eV^2/c^4
         double density = 2.8,     // g/cm^3
         double Y_e = 0.5   // effective electron fraction
         );
