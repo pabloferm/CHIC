@@ -19,7 +19,7 @@ C++ library for computing three/flavor neutrino oscillation probabilities and th
 
 ## Build instructions
 
-- For the CHIC library
+- For the C++ CHIC library only
 ```
 make clean
 make 
@@ -32,4 +32,8 @@ make lib
 - For the python bindings (optional)
 ```
 pip install ./bindings
+```
+and making it available in system-wide
+```
+export PYTHONPATH=$PWD/bindings/:$PYTHONPATH
 ```
