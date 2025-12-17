@@ -44,12 +44,13 @@ export PYTHONPATH=$PWD/bindings/:$PYTHONPATH
 ```
 examples/cpp/example.cpp
 ```
-compile it as
+compile and run it as
 ```
 g++ -o example examples/cpp/example.cpp -Lbuild -lchic -I src -I/usr/include/eigen3
+./example
 ```
 
 - For the python module, you can check the following minimal example:
 ```
-examples/python/example.py
+python3 examples/python/example.py
 ```
