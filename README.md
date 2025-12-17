@@ -37,3 +37,19 @@ and making it available in system-wide
 ```
 export PYTHONPATH=$PWD/bindings/:$PYTHONPATH
 ```
+
+## Examples
+
+- For C++ library, you can check the following minimal example:
+```
+examples/cpp/example.cpp
+```
+compile it as
+```
+g++ -o example examples/cpp/example.cpp -Lbuild -lchic -I src -I/usr/include/eigen3
+```
+
+- For the python module, you can check the following minimal example:
+```
+examples/python/example.py
+```
