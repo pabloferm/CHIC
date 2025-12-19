@@ -8,7 +8,7 @@ C++ library for computing three/flavor neutrino oscillation probabilities and th
 
 - `src/`: C++ source and headers
 - `bindings/`: Python package and bindings
-- `tests/`: Tests for C++ and Python
+- `examples/`: Minimal examples for C++ and Python
 
 ## Requirements
 
