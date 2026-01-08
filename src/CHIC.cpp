@@ -230,10 +230,13 @@ void CHICDIFF::_set_dHs() {
         dHs_dth13();
     } else if (param0 == "th12") {
         dHs_dth12();
+    } else if (param0 == "E") {
+        dHs_dE();
     } else {
         throw std::invalid_argument(std::string("Unknown parameter: ") + std::string(param0));
     }
     if (param0 != "density") dHs = inv_2E * dHs;
+    if (param0 == "E") dHs = -2 * inv_2E * dHs;
     comm_dHH.noalias()  = dHs * Hs  + Hs  * dHs;
     comm_dHH2.noalias() = dHs * Hs2 + Hs2 * dHs;
 }
@@ -336,6 +339,10 @@ void CHICDIFF::dHs_ddcp() {
     dU(2, 0) = mi_flip * c12 * c23 * s13 * e_idelta;
     dU(2, 1) = mi_flip * s12 * c23 * s13 * e_idelta;
     dHs.noalias() = dU * m2 * U.adjoint() + U * m2 * dU.adjoint();
+}
+
+void CHICDIFF::dHs_dE() {
+    dHs = Hs0;
 }
 
 Eigen::Matrix3cd CHICDIFF::get_diff_hamiltonian() {return dHs;}

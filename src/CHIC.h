@@ -167,6 +167,7 @@ class CHICDIFF : public CHIC {
     void dHs_dth13();
     void dHs_dth12();
     void dHs_ddcp();
+    void dHs_dE();
 
 };
 
