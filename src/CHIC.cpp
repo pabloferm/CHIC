@@ -1,4 +1,6 @@
 #include "CHIC.h"
+#include <iostream>
+#include <iterator>
 
 // =================================================================
 // == Base class for CHIC neutrino oscillation probabilities only ==
@@ -235,8 +237,11 @@ void CHICDIFF::_set_dHs() {
     } else {
         throw std::invalid_argument(std::string("Unknown parameter: ") + std::string(param0));
     }
-    if (param0 != "density") dHs = inv_2E * dHs;
-    if (param0 == "E") dHs = -2 * inv_2E * dHs;
+    if (param0 == "E") {
+      dHs = -2 * inv_4E_squared * dHs;
+    } else if (param0 != "density") {
+      dHs = inv_2E * dHs;
+    }
     comm_dHH.noalias()  = dHs * Hs  + Hs  * dHs;
     comm_dHH2.noalias() = dHs * Hs2 + Hs2 * dHs;
 }

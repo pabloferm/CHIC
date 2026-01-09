@@ -55,3 +55,11 @@ g++ -o example examples/cpp/example.cpp -Lbuild -lchic -I src -I/usr/include/eig
 ```
 python3 examples/python/example.py
 ```
+
+- Additionally, there is a Jupyter notebook:
+```
+examples/python/example.ipynb
+```
+
+## Reference
+You can check and cite the associated paper [here](https://arxiv.org/abs/2512.16427).
