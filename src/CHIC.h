@@ -2,6 +2,7 @@
 #define CHIC_H
 
 #include <Eigen/Dense>
+#include <cstddef>
 #include "opt_constants.h"
 
 
@@ -69,13 +70,26 @@ class CHIC {
         need_update = true;
     }
 
+    // Update Ye
+    inline void update_Ye(double Ye) {
+        Y_e = Ye;
+        need_update = true;
+    }
+
     // Called to compute oscillations
     Eigen::Matrix3d compute_oscillations(double E, double L);
+
+    // Compute hamiltonian and eigenvalues
+    void compute_hamiltonians(double E);
+    void _compute_hamiltonians();
+    void _amplitude(double E, double L);
+    void _amplitude(double L, Eigen::Vector3d eigenvals, Eigen::Vector3d prod_eigenvals);
 
     // Access to results
     Eigen::Matrix3cd get_hamiltonian();            // Reduced Hamiltonian
     Eigen::Matrix3cd get_amplitude();              // Coefficients of the amplitude
     Eigen::Vector3d get_eigenvalues();             // Eigenvalues
+    Eigen::Vector3d get_prod_eigenvalues();             // Eigenvalues
 
  protected:
     static constexpr double EPSILON = 1e-20;
@@ -114,10 +128,9 @@ class CHIC {
     // Flag to denote if matrix update is needed.
     bool need_update = true;
     
-    void _compute_hamiltonians();
-    void _amplitude();
     void pmns_matrix();
     void _set_matrices();
+    void _exponential();
 };
 
 

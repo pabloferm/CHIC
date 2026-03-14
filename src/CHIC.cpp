@@ -1,4 +1,5 @@
 #include "CHIC.h"
+#include <complex>
 #include <iostream>
 #include <iterator>
 
@@ -92,31 +93,37 @@ void CHIC::_set_matrices() {
 // Compute oscillations for a given energy E and baseline L
 Eigen::Matrix3d CHIC::compute_oscillations(double E, double L) {
     // Use cached quantities
-    if (need_update) {
-        _set_matrices();
-        E0 = E;
-        _compute_hamiltonians();
-        L0 = L;
-        _amplitude();
-    } else if (E != E0) {
-        E0 = E;
-        _compute_hamiltonians();
-        L0 = L;
-        _amplitude();
-    } else if (L != L0) {
-        L0 = L;
-        _amplitude();
-    }
-
+    _amplitude(E, L);
     return J.cwiseAbs2();
 }
 
 Eigen::Matrix3cd CHIC::get_hamiltonian() {return Hs;}
 Eigen::Matrix3cd CHIC::get_amplitude() {return J;}
 Eigen::Vector3d CHIC::get_eigenvalues() {return lambdas;}
+Eigen::Vector3d CHIC::get_prod_eigenvalues() {return prod_lambdas;}
 
 // Computes amplitude matrix
-void CHIC::_amplitude() {
+void CHIC::_amplitude(double E, double L) {
+
+    if (need_update) {
+        _set_matrices();
+        E0 = E;
+        _compute_hamiltonians();
+        L0 = L;
+    } else if (E != E0) {
+        E0 = E;
+        _compute_hamiltonians();
+        L0 = L;
+    } else if (L != L0) {
+        L0 = L;
+    } else {
+        return;
+    }
+
+    _exponential();
+}
+
+void CHIC::_exponential() {
     // Exponentials
     iL = std::complex<double>(0, -L0 * OptConstants::BASELINE_FACTOR);
     exp_lambdas = diff_lambdas.array() * (iL*lambdas).array().exp();
@@ -129,6 +136,26 @@ void CHIC::_amplitude() {
     // Amplitude
     J.noalias() = cJ[2] * Hs2 + cJ[1] * Hs;
     J.diagonal().array() += cJ[0];
+}
+
+void CHIC::_amplitude(double L, Eigen::Vector3d eigenvals, Eigen::Vector3d prod_eigenvals) {
+    L0 = L;
+    lambdas = eigenvals;
+    prod_lambdas = prod_eigenvals;
+
+    _exponential();
+}
+
+// Compute hamiltonians for given energy
+void CHIC::compute_hamiltonians(double E) {
+    if (need_update) {
+        _set_matrices();
+        E0 = E;
+        _compute_hamiltonians();
+    } else if (E != E0) {
+        E0 = E;
+        _compute_hamiltonians();
+    }
 }
 
 // Compute hamiltonians for given energy
@@ -158,7 +185,7 @@ void CHIC::_compute_hamiltonians() {
     if (TrHs2 < EPSILON) {
         throw std::invalid_argument(
             "Eigenvalues are (almost) degenerate, please check your input parameters.");
-    } else {        
+    } else {
         lambdas[2] = std::sqrt(OptConstants::TWO_THIRDS * TrHs2) *
             std::cos(std::acos(DetHs * std::sqrt(54.0 / trHs2_cubed)) * OptConstants::INV_3);
         lambdas[1] = -(0.5 * lambdas[2] -
@@ -192,21 +219,7 @@ CHICDIFF::CHICDIFF(std::string_view mode,
 
 
 Eigen::Matrix3d CHICDIFF::compute_oscillations_derivatives(std::string_view param, double E, double L) {
-    if (need_update) {
-        _set_matrices();
-        E0 = E;
-        _compute_hamiltonians();
-        L0 = L;
-        _amplitude();
-    } else if (std::abs(E - E0) > EPSILON) {
-        E0 = E;
-        _compute_hamiltonians();
-        L0 = L;
-        _amplitude();
-    } else if (std::abs(L - L0) > EPSILON) {
-        L0 = L;
-        _amplitude();
-    }
+    _amplitude(E, L);
 
     param0 = param;
     _set_dHs();

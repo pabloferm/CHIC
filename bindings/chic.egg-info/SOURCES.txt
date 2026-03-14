@@ -4,6 +4,9 @@ setup.py
 ../bindings/pybind_CHIC.cpp
 ../src/CHIC.cpp
 ../src/CHIC.h
+../src/CHICEARTH.h
+../src/CHIC_EARTH.cpp
+../src/EARTH.h
 ../src/opt_constants.h
 /home/pablo/Pheno/CHIC/bindings/pybind_CHIC.cpp
 /home/pablo/Pheno/CHIC/bindings/../src/CHIC.cpp
