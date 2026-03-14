@@ -158,9 +158,12 @@ void CHIC::_compute_hamiltonians() {
     if (TrHs2 < EPSILON) {
         throw std::invalid_argument(
             "Eigenvalues are (almost) degenerate, please check your input parameters.");
-    } else {        
+    } else {
         lambdas[2] = std::sqrt(OptConstants::TWO_THIRDS * TrHs2) *
             std::cos(std::acos(DetHs * std::sqrt(54.0 / trHs2_cubed)) * OptConstants::INV_3);
+        if (DetHs < 0.0) {
+            lambdas[2] = -lambdas[2];
+        }
         lambdas[1] = -(0.5 * lambdas[2] -
             std::sqrt(0.25 * lambdas[2] * lambdas[2] - DetHs / lambdas[2]));
         lambdas[0] = -(lambdas[2] + lambdas[1]);
