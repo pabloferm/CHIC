@@ -5,6 +5,8 @@ setup.py
 ../src/CHIC.cpp
 ../src/CHIC.h
 ../src/opt_constants.h
+/home/pablo/CHIC/bindings/pybind_CHIC.cpp
+/home/pablo/CHIC/src/CHIC.cpp
 /home/pablo/Pheno/CHIC/bindings/pybind_CHIC.cpp
 /home/pablo/Pheno/CHIC/bindings/../src/CHIC.cpp
 /home/pablo/Pheno/CHIC/src/CHIC.cpp
