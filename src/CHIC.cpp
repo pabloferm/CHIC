@@ -1,7 +1,6 @@
 #include "CHIC.h"
+#include "opt_constants.h"
 #include <complex>
-#include <iostream>
-#include <iterator>
 
 // =================================================================
 // == Base class for CHIC neutrino oscillation probabilities only ==
@@ -16,6 +15,7 @@ CHIC::CHIC(std::string_view mode,
            double dm2_31,
            double density,
            double Y_e) {
+
     // Account for neutrino or antineutrino oscillations
     if (mode == "neutrino" || mode == "nu") {
         flip = 1.0;
@@ -27,6 +27,8 @@ CHIC::CHIC(std::string_view mode,
             "Not a valid (neutrino or anti-neutrino) mode selected.");
     }
 
+    m2 = zero_cache;
+
     // Apply values
     update_th12(theta_12);
     update_th23(theta_23);
@@ -36,9 +38,6 @@ CHIC::CHIC(std::string_view mode,
     this->dm2_31 = dm2_31;
     this->Y_e     = Y_e;
     this->density = density;
-
-    // Construct basic matrices
-    _set_matrices();
 }
 
 // PMNS matrix
@@ -56,71 +55,91 @@ void CHIC::pmns_matrix() {
     U(2, 2) =  c23 * c13;
 }
 
-void CHIC::_set_matrices() {
-    // Build PMNS matrix
+// Vacuum Hamiltonian and related
+void CHIC::_set_vacuum() {
     pmns_matrix();
 
-    // Matter potential
-    V = flip * OptConstants::WEAK * Y_e * density;
-
-    // Determinant term calculation independent of energy
-    std::complex<double> det_term = U(1, 1) * U(2, 2) - U(1, 2) * U(2, 1);
-    detH0 = V * dm2_21 * dm2_31 * std::abs(det_term) * std::abs(det_term);
-
-    // Mass squared differences
     m2(1, 1) = dm2_21;
     m2(2, 2) = dm2_31;
 
-    // Trace of Kinetic term w/o energy dependence
-    trK0  = m2.trace();
-
-    // Matter potential
-    v(0, 0) = V;
-
-    // Terms of the shifted Hamiltonian
-    Hs0 = U * m2 * U.adjoint() - (trK0 * OptConstants::INV_3) * identity_cache;
-    Vs = v - (V * OptConstants::INV_3) * identity_cache;
+    // Traceless vacuum Hamiltonian w/o energy-independent part
+    trK0 = dm2_21 + dm2_31;
+    Hs0  = U * m2 * U.adjoint() - (trK0 * OptConstants::INV_3) * identity_cache;
 
     // Terms of the shifted Hamiltonian squared
     Hs0_2 = Hs0 * Hs0;
-    Vs_2 = Vs * Vs;
-    re_Hs0Vs = Hs0 * Vs + Vs * Hs0;
+    re_Hs0Vs0 = OptConstants::INV_3 * Hs0;
+    re_Hs0Vs0(0,0) *= 4.0; 
+    re_Hs0Vs0(1,1) *= -2.0; 
+    re_Hs0Vs0(1,2) *= -2.0; 
+    re_Hs0Vs0(2,1) *= -2.0; 
+    re_Hs0Vs0(2,2) *= -2.0; 
 
-    // Parameters are up-to-date
-    need_update = false;
+    // Determinant term calculation independent of energy and density
+    const double det_term = std::norm(U(1, 1) * U(2, 2) - U(1, 2) * U(2, 1));
+    detH0 = dm2_21 * dm2_31 * det_term;
+
+    update_pmns   = false;
+    update_matter = true;   // V hasn't been applied yet — force matter rebuild
 }
 
-// Compute oscillations for a given energy E and baseline L
-Eigen::Matrix3d CHIC::compute_oscillations(double E, double L) {
-    // Use cached quantities
-    _amplitude(E, L);
-    return J.cwiseAbs2();
+// Matter potential and related
+void CHIC::_set_matter() {
+    V = flip * OptConstants::WEAK * Y_e * density;
+    const double V3 = V * OptConstants::INV_3;
+
+    // Full cross-term for single-density use: re_Hs0Vs = re_Hs0Vs_unit * V
+    re_Hs0Vs = re_Hs0Vs0 * V;
+
+    // Vs² is diagonal: diag(4V²/9, V²/9, V²/9) — store the two distinct entries
+    Vs2_diag0 = 4.0 * V3 * V3;   // (2V/3)²
+    Vs2_diag1 = V3 * V3;         // (V/3)²
+    
+    update_matter = false;
 }
 
-Eigen::Matrix3cd CHIC::get_hamiltonian() {return Hs;}
-Eigen::Matrix3cd CHIC::get_amplitude() {return J;}
-Eigen::Vector3d CHIC::get_eigenvalues() {return lambdas;}
-Eigen::Vector3d CHIC::get_prod_eigenvalues() {return prod_lambdas;}
+void CHIC::_compute_hamiltonians() {
+    // Full traceless Hamiltonian
+    Hs = Hs0 * inv_2E;
+    Hs(0, 0) += 2.0 * V * OptConstants::INV_3;
+    Hs(1, 1) -= V * OptConstants::INV_3;
+    Hs(2, 2) -= V * OptConstants::INV_3;
+    // Full traceless Hamiltonian squared:
+    Hs2.noalias() = Hs0_2 * inv_4E_squared + re_Hs0Vs * inv_2E;
+    Hs2(0, 0) += Vs2_diag0;
+    Hs2(1, 1) += Vs2_diag1;
+    Hs2(2, 2) += Vs2_diag1;
+}
 
-// Computes amplitude matrix
-void CHIC::_amplitude(double E, double L) {
+void CHIC::_compute_eigenvalues() {
+    // Trace of full Hamiltonian (used for DetHs)
+    TrH       = inv_2E * trK0 + V;
+    TrHs2 = std::real(Hs2.trace()); // !?
+    DetHs = detH0 * V * inv_4E_squared
+          + TrHs2 * TrH  * OptConstants::INV_6
+          - TrH * TrH * TrH * OptConstants::INV_27;
 
-    if (need_update) {
-        _set_matrices();
-        E0 = E;
-        _compute_hamiltonians();
-        L0 = L;
-    } else if (E != E0) {
-        E0 = E;
-        _compute_hamiltonians();
-        L0 = L;
-    } else if (L != L0) {
-        L0 = L;
+    // Calculation of eigenvalues: trigonometric-quadratic-linear method
+    if (TrHs2 < EPSILON) {
+        throw std::invalid_argument(
+            "Eigenvalues are (almost) degenerate, please check your input parameters.");
     } else {
-        return;
+        lambdas[0] = std::sqrt(OptConstants::TWO_OVER_3 * TrHs2) *
+            std::cos(std::acos(OptConstants::SQRT_54 * DetHs / TrHs2 / std::sqrt(TrHs2)) * OptConstants::INV_3);
+        lambdas[1] = -(0.5 * lambdas[0] -
+            std::sqrt(0.25 * lambdas[0] * lambdas[0] - DetHs / lambdas[0]));
+        lambdas[2] = -(lambdas[0] + lambdas[1]);
     }
 
-    _exponential();
+    // Cyclic product and difference of eigenvalues
+    prod_lambdas = DetHs / lambdas.array();
+    diff_lambdas = 1.0 / (2.0 * lambdas.array().square() + prod_lambdas.array());
+}
+
+void CHIC::compute_hamiltonians(double E) {
+    if (update_pmns)   _set_vacuum();
+    if (update_matter) _set_matter();
+    if (E != E0) { E0 = E; inv_2E = 0.5 / E0; inv_4E_squared = inv_2E * inv_2E; _compute_hamiltonians(); _compute_eigenvalues();}
 }
 
 void CHIC::_exponential() {
@@ -138,67 +157,21 @@ void CHIC::_exponential() {
     J.diagonal().array() += cJ[0];
 }
 
-void CHIC::_amplitude(double L, Eigen::Vector3d eigenvals, Eigen::Vector3d prod_eigenvals) {
-    L0 = L;
-    lambdas = eigenvals;
-    prod_lambdas = prod_eigenvals;
+// Compute oscillations for a given energy E and baseline L
+Eigen::Matrix3d CHIC::compute_oscillations(double E, double L) {
+    _amplitude(E, L);
+    return J.cwiseAbs2();
+}
+
+void CHIC::_amplitude(double E, double L) {
+    if (update_pmns)          { _set_vacuum();           E0 = E; _compute_hamiltonians(); _compute_eigenvalues(); L0 = L; }
+    else if (update_matter)   { _set_matter();           E0 = E; _compute_hamiltonians(); _compute_eigenvalues(); L0 = L; }
+    else if (E != E0)        { E0 = E; _compute_hamiltonians(); _compute_eigenvalues(); _compute_eigenvalues(); L0 = L; }
+    else if (L == L0)        { return; }
+    else                     { L0 = L; }
 
     _exponential();
 }
-
-// Compute hamiltonians for given energy
-void CHIC::compute_hamiltonians(double E) {
-    if (need_update) {
-        _set_matrices();
-        E0 = E;
-        _compute_hamiltonians();
-    } else if (E != E0) {
-        E0 = E;
-        _compute_hamiltonians();
-    }
-}
-
-// Compute hamiltonians for given energy
-void CHIC::_compute_hamiltonians() {
-    inv_2E = 0.5 / E0;
-    inv_4E_squared = inv_2E * inv_2E;
-
-    // Reduced Hamiltonian w/ explicit energy dependence
-    Hs = Hs0 * inv_2E + Vs;
-
-    // Trace of Hamiltonian
-    TrH = inv_2E * trK0 + V;
-    trH_cubed = TrH * TrH * TrH;
-
-    // Reduced Hamiltonian squared w/ explicit energy dependence
-    Hs2 = Hs0_2 * inv_4E_squared + re_Hs0Vs * inv_2E + Vs_2;
-
-    // Trace of reduced Hamiltonian squared
-    TrHs2 = std::real(Hs2.trace());
-    trHs2_cubed = TrHs2 * TrHs2 * TrHs2;
-
-    // Determinant of reduced Hamiltonian
-    DetHs = detH0 * inv_4E_squared + (TrHs2 * TrH) * OptConstants::INV_6 -
-            (trH_cubed) * OptConstants::INV_27;
-
-    // Calculation of eigenvalues: trigonometric-quadratic-linear method
-    if (TrHs2 < EPSILON) {
-        throw std::invalid_argument(
-            "Eigenvalues are (almost) degenerate, please check your input parameters.");
-    } else {
-        lambdas[2] = std::sqrt(OptConstants::TWO_THIRDS * TrHs2) *
-            std::cos(std::acos(DetHs * std::sqrt(54.0 / trHs2_cubed)) * OptConstants::INV_3);
-        lambdas[1] = -(0.5 * lambdas[2] -
-            std::sqrt(0.25 * lambdas[2] * lambdas[2] - DetHs / lambdas[2]));
-        lambdas[0] = -(lambdas[2] + lambdas[1]);
-    }
-
-    // Cyclic product of eigenvalues
-    prod_lambdas = DetHs / lambdas.array();
-    // Cyclic difference of eigenvalues divided by the discriminant
-    diff_lambdas = 1.0 / (2.0 * lambdas.array().square() + prod_lambdas.array());
-}
-
 
 
 // ====================================================================== \\
@@ -362,6 +335,3 @@ void CHICDIFF::dHs_ddcp() {
 void CHICDIFF::dHs_dE() {
     dHs = Hs0;
 }
-
-Eigen::Matrix3cd CHICDIFF::get_diff_hamiltonian() {return dHs;}
-Eigen::Matrix3cd CHICDIFF::get_diff_amplitude() {return dJ;}

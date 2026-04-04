@@ -27,6 +27,7 @@ ext_name = "pychic"
 sources = [
     os.path.join(ROOT, "bindings", "pybind_CHIC.cpp"),
     os.path.join(ROOT, "src", "CHIC.cpp"),
+    os.path.join(ROOT, "src", "CHIC_EARTH.cpp"),
 ]
 
 include_dirs = [
