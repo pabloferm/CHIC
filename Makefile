@@ -10,21 +10,36 @@ CXXFLAGS = -std=c++17 -O3 -march=native -ffast-math -funroll-loops \
 INCLUDES = -I/usr/include/eigen3 -I. -Isrc
 
 # C++ sources
+<<<<<<< HEAD
 LIB_SOURCE = src/CHIC.cpp
 HEADER     = src/CHIC.h
 
 # Build artifacts
 BUILD_DIR  = build
 LIB_OBJ    = $(BUILD_DIR)/CHIC.o
+=======
+LIB_SOURCE = src/CHIC.cpp src/CHIC_EARTH.cpp
+HEADER     = src/CHIC.h src/CHIC_EARTH.h
+
+# C++ build
+BUILD_DIR = build
+LIB_OBJ   = $(BUILD_DIR)/CHIC.o $(BUILD_DIR)/CHIC_EARTH.o
+>>>>>>> b47b36d (earth implementation)
 LIB_TARGET = $(BUILD_DIR)/libchic.a
 
 # Examples
 EXAMPLE_DIR  = examples/cpp
+<<<<<<< HEAD
 EXAMPLE_BINS = $(EXAMPLE_DIR)/chic_benchmark $(EXAMPLE_DIR)/example
 
 # Prevent make from deleting intermediate files (library, objects)
 .SECONDARY:
 
+=======
+EXAMPLE_BINS = $(EXAMPLE_DIR)/example $(EXAMPLE_DIR)/test_chicearth
+
+.SECONDARY:
+>>>>>>> b47b36d (earth implementation)
 .PHONY: all lib examples clean dirs
 
 all: lib
@@ -39,10 +54,18 @@ $(LIB_TARGET): $(LIB_OBJ)
 	@echo "Creating static library: $@"
 	ar rcs $@ $^
 
-$(LIB_OBJ): $(LIB_SOURCE) $(HEADER) | dirs
-	@echo "Compiling library object: $<"
+# Compile each library object explicitly
+$(BUILD_DIR)/CHIC.o: src/CHIC.cpp $(HEADER) | dirs
+	@echo "Compiling: $<"
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
+<<<<<<< HEAD
+=======
+$(BUILD_DIR)/CHIC_EARTH.o: src/CHIC_EARTH.cpp $(HEADER) | dirs
+	@echo "Compiling: $<"
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+>>>>>>> b47b36d (earth implementation)
 # Build all examples
 examples: lib $(EXAMPLE_BINS)
 
@@ -58,4 +81,8 @@ $(EXAMPLE_DIR)/%: $(BUILD_DIR)/%.o $(LIB_TARGET)
 
 clean:
 	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/*.a $(EXAMPLE_BINS)
+<<<<<<< HEAD
 	@echo "Cleaned C++ build artifacts"
+=======
+	@echo "Cleaned compilation artifacts."
+>>>>>>> b47b36d (earth implementation)
