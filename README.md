@@ -45,11 +45,15 @@ export PYTHONPATH=$PWD/bindings/:$PYTHONPATH
 ```
 examples/cpp/example.cpp
 ```
-compile and run it as
+or run a simple benchmark program.compile and run it as
 ```
-g++ -o example examples/cpp/example.cpp -Lbuild -lchic -I src -I/usr/include/eigen3
-./example
+examples/cpp/chic_benchmark.cpp
 ```
+To compile them, just do
+```
+make examples
+```
+The executables will appear under the `examples/cpp/` folder.
 
 - For the python module, you can check the following minimal example:
 ```
