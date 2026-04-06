@@ -24,6 +24,10 @@ class CHIC {
         double Y_e = 0.5   // effective electron fraction
         );
 
+    CHIC(const CHIC &) = default;
+    CHIC(CHIC &&) = default;
+    CHIC &operator=(const CHIC &) = default;
+    CHIC &operator=(CHIC &&) = default;
     // Update dcp
     inline void update_dcp(double delta_cp) {
         e_idelta = std::exp(std::complex<double>(0, flip * delta_cp));

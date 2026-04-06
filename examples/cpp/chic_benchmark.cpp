@@ -12,12 +12,12 @@ int main()
     // Set the vacuum oscillation parameters //
     // ------------------------------------- //
     CHIC chic;
-    chic.update_dcp(4.1);
+    chic.update_dcp(-2.2);
     chic.update_dm231(2.5e-3);
     chic.update_dm221(7.5e-5);
-    chic.update_th12(0.583638);   // sin^2(th12)=0.31
-    chic.update_th13(0.149574);   // sin^2(th13)=0.02
-    chic.update_th23(0.858701);   // sin^2(th23)=0.55
+    chic.update_th12(0.590500015160318);   // sin^2(th12)=0.31
+    chic.update_th13(0.1418970546041639);   // sin^2(th13)=0.02
+    chic.update_th23(0.8354818739782283);   // sin^2(th23)=0.55
     chic.update_density(3.0);     // g/cm^3
 
     // ------------------------------- //

@@ -1,12 +1,5 @@
 #include "CHIC.h"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #include <complex>
-=======
->>>>>>> 14aab70 (remove obsolete includes)
-=======
-#include <complex>
->>>>>>> b47b36d (earth implementation)
 
 // =================================================================
 // == Base class for CHIC neutrino oscillation probabilities only ==
@@ -121,11 +114,7 @@ void CHIC::_compute_hamiltonians() {
     Hs2(2, 2) += Vs2_diag1;
 
     // Trace of full Hamiltonian (used for DetHs)
-<<<<<<< HEAD
-    TrH       = inv_2E * trK0 + V;
-=======
     TrH   = inv_2E * trK0 + V;
->>>>>>> b47b36d (earth implementation)
     TrHs2 = std::real(Hs2.trace()); // !?
     DetHs = detH0 * V * inv_4E_squared
           + TrHs2 * TrH  * OptConstants::INV_6
