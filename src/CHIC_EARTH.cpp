@@ -1,6 +1,9 @@
 #include "CHIC_EARTH.h"
+#include "earth.h"
 #include <cmath>
 #include <cassert>
+
+#include <iostream>
  
 // =================================================== //
 // ====== Class for Earth neutrino propagation ======= //
@@ -51,13 +54,23 @@ void CHICEARTH::_build_track() {
   
   for (int i = 0; i < Earth->Nlayers; ++i) {  // outer → inner
     const double seg2 = radii2[i] - Rsin2;
-    if (seg2 > 0.0) tracks[i] = std::sqrt(seg2);
+    if (seg2 > 0.0) {
+      tracks[i] = std::sqrt(seg2);
+      if (i < deepest) deepest = i;
+    }
     else tracks[i] = 0.0;
   }
+  std::cout<<"================================================="<<std::endl;
+  std::cout<<"Start"<<std::endl;
+  std::cout<<"Cos zenith: "<< cos_zenith0<<std::endl;
+  std::cout<<"Impact: "<< R_EARTH*std::sqrt(1-cos_zenith0*cos_zenith0)<<std::endl;
+  std::cout<<"Deepest: "<< deepest<<std::endl;
 }
 
 void CHICEARTH::_layer_amplitude(double L, const Layer& lay, const bool deepest) {
   // Exponentials
+  std::cout<<"Layer"<<std::endl;
+  std::cout<<"Baseline here: "<<L<<std::endl;
   iL = std::complex<double>(0.0, -L * OptConstants::BASELINE_FACTOR);
   exp_eigenvals = lay.diff_lambdas.array() * (iL * lay.lambdas).array().exp();
   
@@ -73,28 +86,32 @@ void CHICEARTH::_layer_amplitude(double L, const Layer& lay, const bool deepest)
 }
 
 void CHICEARTH::_amplitude() {
+  std::cout<<"Total baseline should be: "<< -2*R_EARTH*cos_zenith0<<std::endl;
   // start with the deepest layer
+  std::cout<<"Density: "<<Earth->density[deepest]<<std::endl;
   _layer_amplitude(2 * tracks[deepest], Layers[deepest], true);
   // loop over the rest of shallower layers
   for (int i = deepest + 1; i < Earth->Nlayers; i++) {
+    std::cout<<"Density: "<<Earth->density[i]<<std::endl;
     _layer_amplitude(std::abs(tracks[i] - tracks[i - 1]), Layers[i]);
   }
+  std::cout<<"Finish"<<std::endl;
 }
 
 Eigen::Matrix3d CHICEARTH::compute_oscillations(double E, double cos_zenith, double h) {
   if (cos_zenith >= 0.0)
     return Eigen::Matrix3d::Identity(); // to be removed when h is applied
 
-  // Energy dependence
-  if (E != E0 || update_vacuum) {
-    E0 = E;
-    _compute_hamiltonians();
-  }
-
   // Build track
   if (cos_zenith != cos_zenith0) {
     cos_zenith0 = cos_zenith;
     _build_track();
+  }
+
+  // Energy dependence
+  if (E != E0 || update_vacuum) {
+    E0 = E;
+    _compute_hamiltonians();
   }
 
   // Baseline dependence and amplitude

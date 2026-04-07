@@ -5,8 +5,7 @@ set xlabel 'E [GeV]'
 set ylabel 'cos(zenith)'
 set cbrange [0:1]
 set palette rgbformulae 33,13,10
-set logscale x
-set xrange [0.1:100]
+set xrange [2:40]
 set yrange [-1:0]
 set title 'P_{ee}'
 plot 'oscillations.dat' using 1:2:3 with image notitle

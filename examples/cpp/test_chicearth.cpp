@@ -185,8 +185,8 @@ void dump_and_plot(CHICEARTH& earth,
                    const std::string& scriptfile = "plot_oscillations.gp") {
   std::cout << "\n========== Generating gnuplot data: " << datafile << " ==========\n";
 
-  const double log_E_min = std::log10(0.1);
-  const double log_E_max = std::log10(100.0);
+  const double log_E_min = std::log10(2);
+  const double log_E_max = std::log10(40.0);
   const double cz_min    = -1.0;
   const double cz_max    =  0.0;
 
@@ -231,8 +231,7 @@ void dump_and_plot(CHICEARTH& earth,
      << "set ylabel 'cos(zenith)'\n"
      << "set cbrange [0:1]\n"
      << "set palette rgbformulae 33,13,10\n"
-     << "set logscale x\n"
-     << "set xrange [0.1:100]\n"
+     << "set xrange [2:40]\n"
      << "set yrange [-1:0]\n";
 
   int col = 3;
@@ -247,6 +246,7 @@ void dump_and_plot(CHICEARTH& earth,
             << "Run with:  gnuplot " << scriptfile << "\n";
 }
 
+// << "set logscale x\n"
 // ------------------------------------------------------------------ //
 //  main
 // ------------------------------------------------------------------ //
