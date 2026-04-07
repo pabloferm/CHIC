@@ -115,7 +115,7 @@ void CHIC::_compute_hamiltonians() {
 
     // Trace of full Hamiltonian (used for DetHs)
     TrH   = inv_2E * trK0 + V;
-    TrHs2 = std::real(Hs2.trace()); // !?
+    TrHs2 = std::abs(Hs2.trace()); // !?
     DetHs = detH0 * V * inv_4E_squared
           + TrHs2 * TrH  * OptConstants::INV_6
           - TrH * TrH * TrH * OptConstants::INV_27;
@@ -200,7 +200,7 @@ Eigen::Matrix3d CHICDIFF::compute_oscillations_derivatives(std::string_view para
 
     _amplitude_derivative();
 
-    return 2.0 * dJ.cwiseProduct(J.conjugate()).real();
+    return 2.0 * dJ.cwiseProduct(J.conjugate()).cwiseAbs();
 }
 
 void CHICDIFF::_set_dHs() {
