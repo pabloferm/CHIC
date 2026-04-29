@@ -69,6 +69,10 @@ void CHIC::_set_vacuum() {
     trK0 = dm2_21 + dm2_31;
     Hs0  = U * m2 * U.adjoint() - (trK0 * OptConstants::INV_3) * identity_cache;
 
+    // Determinant term calculation independent of energy and density
+    const double det_term = std::norm(U(1, 1) * U(2, 2) - U(1, 2) * U(2, 1));
+    detH0 = dm2_21 * dm2_31 * det_term;
+
     // Terms of the shifted Hamiltonian squared
     Hs0_2 = Hs0 * Hs0;
     re_Hs0Vs0 = OptConstants::INV_3 * Hs0;
@@ -77,10 +81,6 @@ void CHIC::_set_vacuum() {
     re_Hs0Vs0(1,2) *= -2.0; 
     re_Hs0Vs0(2,1) *= -2.0; 
     re_Hs0Vs0(2,2) *= -2.0; 
-
-    // Determinant term calculation independent of energy and density
-    const double det_term = std::norm(U(1, 1) * U(2, 2) - U(1, 2) * U(2, 1));
-    detH0 = dm2_21 * dm2_31 * det_term;
 
     update_pmns   = false;
     update_matter = true;   // V hasn't been applied yet — force matter rebuild
