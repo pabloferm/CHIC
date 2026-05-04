@@ -2,8 +2,22 @@
 #define CHIC_H
 
 #include <Eigen/Dense>
-#include <cstddef>
 #include "opt_constants.h"
+
+// #define CHIC_EIGEN_VERSION_STRING \
+//     "Eigen " \
+//     EIGEN_STRINGIFY(EIGEN_WORLD_VERSION) "." \
+//     EIGEN_STRINGIFY(EIGEN_MAJOR_VERSION) "." \
+//     EIGEN_STRINGIFY(EIGEN_MINOR_VERSION)
+ 
+// // Hard error on Eigen < 5 (MAJOR < 5): the real/complex promotion rules
+// // that CHIC relies on were tightened in Eigen 5.
+// static_assert(EIGEN_MAJOR_VERSION >= 5,
+//     "CHIC requires Eigen 5 or later (found " CHIC_EIGEN_VERSION_STRING "). "
+//     "Please update your Eigen installation.");
+ 
+// // Emit the detected version as a compiler note during every build.
+// #pragma message("CHIC: building with " CHIC_EIGEN_VERSION_STRING)
 
 
 // ================================================================= \\

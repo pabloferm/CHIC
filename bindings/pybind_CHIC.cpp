@@ -12,10 +12,10 @@ PYBIND11_MODULE(pychic, m) {
     py::class_<CHIC>(m, "CHIC")
         .def(py::init<std::string, double, double, double, double, double, double, double, double>(),
              py::arg("mode") = "neutrino",
-             py::arg("theta_12") = 33.44,
-             py::arg("theta_23") = 49.2,
-             py::arg("theta_13") = 8.57,
-             py::arg("delta_cp") = 234,
+             py::arg("theta_12") = 0.5836381018669037,  // = 33.44°
+             py::arg("theta_23") = 0.8587019919812102,  // = 49.2°,
+             py::arg("theta_13") = 0.14957471689591406, // = 8.57°
+             py::arg("delta_cp") = 4.084070449666731,   // = 234°
              py::arg("dm2_21") = 7.42e-5,
              py::arg("dm2_31") = 2.51e-3,
              py::arg("density") = 2.8,
@@ -36,10 +36,10 @@ PYBIND11_MODULE(pychic, m) {
     py::class_<CHICDIFF, CHIC>(m, "CHICDIFF")
         .def(py::init<std::string, double, double, double, double, double, double, double, double>(),
              py::arg("mode") = "neutrino",
-             py::arg("theta_12") = 33.44,
-             py::arg("theta_23") = 49.2,
-             py::arg("theta_13") = 8.57,
-             py::arg("delta_cp") = 234,
+             py::arg("theta_12") = 0.5836381018669037,  // = 33.44°
+             py::arg("theta_23") = 0.8587019919812102,  // = 49.2°,
+             py::arg("theta_13") = 0.14957471689591406, // = 8.57°
+             py::arg("delta_cp") = 4.084070449666731,   // = 234°
              py::arg("dm2_21") = 7.42e-5,
              py::arg("dm2_31") = 2.51e-3,
              py::arg("density") = 2.8,

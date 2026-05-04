@@ -103,6 +103,8 @@ void CHIC::_set_matter() {
 
 void CHIC::_compute_hamiltonians() {
     // Full traceless Hamiltonian
+    inv_2E = 0.5 / E0; 
+    inv_4E_squared = inv_2E * inv_2E;
     Hs = Hs0 * inv_2E;
     Hs(0, 0) += 2.0 * V * OptConstants::INV_3;
     Hs(1, 1) -= V * OptConstants::INV_3;
@@ -138,9 +140,10 @@ void CHIC::_compute_hamiltonians() {
 }
 
 void CHIC::compute_hamiltonians(double E) {
-    if (update_pmns)   _set_vacuum();
-    if (update_matter) _set_matter();
-    if (E != E0) { E0 = E; inv_2E = 0.5 / E0; inv_4E_squared = inv_2E * inv_2E; _compute_hamiltonians();}
+    bool recompute = (E != E0);
+    if (update_pmns)   { _set_vacuum();  recompute = true; }
+    if (update_matter) { _set_matter();  recompute = true; }
+    if (recompute)     { E0 = E; _compute_hamiltonians();  }
 }
 
 void CHIC::_exponential() {
@@ -165,11 +168,12 @@ Eigen::Matrix3d CHIC::compute_oscillations(double E, double L) {
 }
 
 void CHIC::_amplitude(double E, double L) {
-    if (update_pmns)          { _set_vacuum();           E0 = E; _compute_hamiltonians(); L0 = L; }
-    else if (update_matter)   { _set_matter();           E0 = E; _compute_hamiltonians(); L0 = L; }
-    else if (E != E0)        { E0 = E; _compute_hamiltonians(); L0 = L; }
-    else if (L == L0)        { return; }
-    else                     { L0 = L; }
+    bool recompute = (E != E0);
+    if (update_pmns)   { _set_vacuum();  recompute = true; }
+    if (update_matter) { _set_matter();  recompute = true; }
+    if (recompute)     { E0 = E; _compute_hamiltonians(); L0 = L; }
+    else if (L == L0)  { return; }
+    else               { L0 = L; }
 
     _exponential();
 }
