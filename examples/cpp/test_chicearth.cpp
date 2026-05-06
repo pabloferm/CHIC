@@ -180,13 +180,13 @@ void test_performance(CHICEARTH& earth, int NE = 200, int Ncz = 200) {
 //  4. Dump grid + gnuplot script
 // ------------------------------------------------------------------ //
 void dump_and_plot(CHICEARTH& earth,
-                   int NE = 800, int Ncz = 50,
+                   int NE = 200, int Ncz = 200,
                    const std::string& datafile  = "oscillations.dat",
                    const std::string& scriptfile = "plot_oscillations.gp") {
   std::cout << "\n========== Generating gnuplot data: " << datafile << " ==========\n";
 
   const double log_E_min = std::log10(2);
-  const double log_E_max = std::log10(40.0);
+  const double log_E_max = std::log10(17.0);
   const double cz_min    = -1.0;
   const double cz_max    =  0.0;
 
@@ -227,18 +227,18 @@ void dump_and_plot(CHICEARTH& earth,
   gp << "set terminal pngcairo size 1200,1100 enhanced font 'Arial,11'\n"
      << "set output 'oscillations.png'\n"
      << "set multiplot layout 3,3 title 'Neutrino oscillation probabilities (Earth)'\n"
-     << "set xlabel 'E [GeV]'\n"
-     << "set ylabel 'cos(zenith)'\n"
+     << "set ylabel 'E [GeV]'\n"
+     << "set xlabel 'cos(zenith)'\n"
      << "set cbrange [0:1]\n"
      << "set palette rgbformulae 33,13,10\n"
-     << "set xrange [2:40]\n"
-     << "set yrange [-1:0]\n";
+     << "set yrange [2:17]\n"
+     << "set xrange [-1:0]\n";
 
   int col = 3;
   for (int a = 0; a < 3; ++a)
     for (int b = 0; b < 3; ++b, ++col)
       gp << "set title '" << titles[a][b] << "'\n"
-         << "plot '" << datafile << "' using 1:2:" << col << " with image notitle\n";
+         << "plot '" << datafile << "' using 2:1:" << col << " with image notitle\n";
 
   gp << "unset multiplot\n";
   gp.close();

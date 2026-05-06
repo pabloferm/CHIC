@@ -23,7 +23,7 @@ public:
       double delta_cp          = 4.084070449666731,
       double dm2_21            = 7.42e-5,
       double dm2_31            = 2.51e-3,
-      std::string_view model   = "PREM4",
+      std::string_view model   = "PREM10",
       double detector_depth    = 0.0);
  
   // ---- Parameter update setters ----
@@ -41,15 +41,14 @@ public:
   [[nodiscard]] const Eigen::Matrix3cd& get_amplitude() const noexcept { return J; }
 
 private:
-  //EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  
   // ---- Per-layer cached quantities (energy-dependent) ----
   struct Layer {
     Eigen::Matrix3cd Hs;            // traceless H 
     Eigen::Matrix3cd Hs2;           // traceless H²
-    Eigen::Vector3d lambdas;       // eigenvalues
-    Eigen::Vector3d diff_lambdas;  // eigenvalue differences
-    Eigen::Vector3d prod_lambdas;  // pairwise products of eigenvalues
+    Eigen::Vector3d lambdas;        // eigenvalues
+    Eigen::Vector3d diff_lambdas;   // eigenvalue differences
+    Eigen::Vector3d prod_lambdas;   // pairwise products of eigenvalues
   };
  
   // ---- Private helpers ----
@@ -78,3 +77,33 @@ private:
 };
  
 #endif // CHICEARTH_H
+
+/*
+// =================================================== \\
+// == Derived class for Earth neutrino propagation === \\
+// == and derivatives ================================ \\
+// =================================================== \\
+
+class CHICEARTHDIFF : public CHICEARTH {
+ public:
+    // Constructor - inherits from base class
+    explicit CHICEARTHDIFF(std::string_view mode = "neutrino",
+                      double theta_12 = 0.5836381018669037,
+                      double theta_23 = 0.8587019919812102,
+                      double theta_13 = 0.14957471689591406,
+                      double delta_cp = 4.084070449666731,
+                      double dm2_21 = 7.42e-5,
+                      double dm2_31 = 2.51e-3,
+                      std::string_view model   = "PREM4",
+                      double detector_depth    = 0.0);
+
+
+private:
+ 
+  // ---- Per-layer cached quantities (energy-dependent) ----
+  struct dLayer {
+    Eigen::Matrix3cd dHs;                 // derivative of traceless H 
+    Eigen::Matrix3cd comm_dHH, comm_dHH2; // Anti-commutator matrices
+  };
+
+  */

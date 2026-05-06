@@ -69,10 +69,6 @@ void CHIC::_set_vacuum() {
     trK0 = dm2_21 + dm2_31;
     Hs0  = U * m2 * U.adjoint() - (trK0 * OptConstants::INV_3) * identity_cache;
 
-    // Determinant term calculation independent of energy and density
-    const double det_term = std::norm(U(1, 1) * U(2, 2) - U(1, 2) * U(2, 1));
-    detH0 = dm2_21 * dm2_31 * det_term;
-
     // Terms of the shifted Hamiltonian squared
     Hs0_2 = Hs0 * Hs0;
     re_Hs0Vs0 = OptConstants::INV_3 * Hs0;
@@ -81,6 +77,10 @@ void CHIC::_set_vacuum() {
     re_Hs0Vs0(1,2) *= -2.0; 
     re_Hs0Vs0(2,1) *= -2.0; 
     re_Hs0Vs0(2,2) *= -2.0; 
+
+    // Determinant term calculation independent of energy and density
+    const double det_term = std::norm(U(1, 1) * U(2, 2) - U(1, 2) * U(2, 1));
+    detH0 = dm2_21 * dm2_31 * det_term;
 
     update_pmns   = false;
     update_matter = true;   // V hasn't been applied yet — force matter rebuild
@@ -103,6 +103,8 @@ void CHIC::_set_matter() {
 
 void CHIC::_compute_hamiltonians() {
     // Full traceless Hamiltonian
+    inv_2E = 0.5 / E0; 
+    inv_4E_squared = inv_2E * inv_2E;
     Hs = Hs0 * inv_2E;
     Hs(0, 0) += 2.0 * V * OptConstants::INV_3;
     Hs(1, 1) -= V * OptConstants::INV_3;
@@ -114,8 +116,8 @@ void CHIC::_compute_hamiltonians() {
     Hs2(2, 2) += Vs2_diag1;
 
     // Trace of full Hamiltonian (used for DetHs)
-    TrH   = inv_2E * trK0 + V;
-    TrHs2 = std::abs(Hs2.trace()); // !?
+    TrH       = inv_2E * trK0 + V;
+    TrHs2 = std::real(Hs2.trace()); // !?
     DetHs = detH0 * V * inv_4E_squared
           + TrHs2 * TrH  * OptConstants::INV_6
           - TrH * TrH * TrH * OptConstants::INV_27;
@@ -138,9 +140,10 @@ void CHIC::_compute_hamiltonians() {
 }
 
 void CHIC::compute_hamiltonians(double E) {
-    if (update_pmns)   _set_vacuum();
-    if (update_matter) _set_matter();
-    if (E != E0) { E0 = E; inv_2E = 0.5 / E0; inv_4E_squared = inv_2E * inv_2E; _compute_hamiltonians();}
+    bool recompute = (E != E0);
+    if (update_pmns)   { _set_vacuum();  recompute = true; }
+    if (update_matter) { _set_matter();  recompute = true; }
+    if (recompute)     { E0 = E; _compute_hamiltonians();  }
 }
 
 void CHIC::_exponential() {
@@ -165,11 +168,12 @@ Eigen::Matrix3d CHIC::compute_oscillations(double E, double L) {
 }
 
 void CHIC::_amplitude(double E, double L) {
-    if (update_pmns)          { _set_vacuum();           E0 = E; _compute_hamiltonians(); L0 = L; }
-    else if (update_matter)   { _set_matter();           E0 = E; _compute_hamiltonians(); L0 = L; }
-    else if (E != E0)        { E0 = E; _compute_hamiltonians(); L0 = L; }
-    else if (L == L0)        { return; }
-    else                     { L0 = L; }
+    bool recompute = (E != E0);
+    if (update_pmns)   { _set_vacuum();  recompute = true; }
+    if (update_matter) { _set_matter();  recompute = true; }
+    if (recompute)     { E0 = E; _compute_hamiltonians(); L0 = L; }
+    else if (L == L0)  { return; }
+    else               { L0 = L; }
 
     _exponential();
 }
@@ -200,7 +204,7 @@ Eigen::Matrix3d CHICDIFF::compute_oscillations_derivatives(std::string_view para
 
     _amplitude_derivative();
 
-    return 2.0 * dJ.cwiseProduct(J.conjugate()).cwiseAbs();
+    return 2.0 * dJ.cwiseProduct(J.conjugate()).real();
 }
 
 void CHICDIFF::_set_dHs() {

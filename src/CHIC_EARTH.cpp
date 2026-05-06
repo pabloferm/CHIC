@@ -81,16 +81,12 @@ void CHICEARTH::_layer_amplitude(double L, const Layer& lay, const bool deepest)
 }
 
 void CHICEARTH::_amplitude() {
-  std::cout<<"Total baseline should be: "<< -2*R_EARTH*cos_zenith0<<std::endl;
-  // start with the deepest layer
-  std::cout<<"Density: "<<Earth->density[deepest]<<std::endl;
+  // amplitude at deepest layer
   _layer_amplitude(2 * tracks[deepest], Layers[deepest], true);
   // loop over the rest of shallower layers
   for (int i = deepest + 1; i < Earth->Nlayers; i++) {
-    std::cout<<"Density: "<<Earth->density[i]<<std::endl;
     _layer_amplitude(std::abs(tracks[i] - tracks[i - 1]), Layers[i]);
   }
-  std::cout<<"Finish"<<std::endl;
 }
 
 Eigen::Matrix3d CHICEARTH::compute_oscillations(double E, double cos_zenith, double h) {
@@ -114,7 +110,7 @@ Eigen::Matrix3d CHICEARTH::compute_oscillations(double E, double cos_zenith, dou
  return J.cwiseAbs2();
 }
 
-
+/*
 // ====================================================================== \\
 // ==== Class for probabilities and derivatives of Earth propagation ==== \\
 // ====================================================================== \\
@@ -242,12 +238,16 @@ Eigen::Matrix3d CHICDIFFEARTH::compute_oscillations_derivatives(std::string_view
 
   // Baseline dependence and amplitude
   _amplitude_and_diff();
- return J.cwiseAbs2();
+
+  return 2.0 * dJ.cwiseProduct(J.conjugate()).real();
 }
 
+
+/*/
 /*
 To compute derivative, we need to compute the amplitude.
 Make up your mind first if you want to get the derivatives.
 So we can implement the calculation of J and dJ at the same time and save time.
-Maybe split in files?
+Maybe split in files? Not really. 
+Actually we don't need full dJ, but 
 */

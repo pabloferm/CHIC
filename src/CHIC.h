@@ -2,8 +2,22 @@
 #define CHIC_H
 
 #include <Eigen/Dense>
-#include <cstddef>
 #include "opt_constants.h"
+
+// #define CHIC_EIGEN_VERSION_STRING \
+//     "Eigen " \
+//     EIGEN_STRINGIFY(EIGEN_WORLD_VERSION) "." \
+//     EIGEN_STRINGIFY(EIGEN_MAJOR_VERSION) "." \
+//     EIGEN_STRINGIFY(EIGEN_MINOR_VERSION)
+ 
+// // Hard error on Eigen < 5 (MAJOR < 5): the real/complex promotion rules
+// // that CHIC relies on were tightened in Eigen 5.
+// static_assert(EIGEN_MAJOR_VERSION >= 5,
+//     "CHIC requires Eigen 5 or later (found " CHIC_EIGEN_VERSION_STRING "). "
+//     "Please update your Eigen installation.");
+ 
+// // Emit the detected version as a compiler note during every build.
+// #pragma message("CHIC: building with " CHIC_EIGEN_VERSION_STRING)
 
 
 // ================================================================= \\
@@ -24,10 +38,6 @@ class CHIC {
         double Y_e = 0.5   // effective electron fraction
         );
 
-    CHIC(const CHIC &) = default;
-    CHIC(CHIC &&) = default;
-    CHIC &operator=(const CHIC &) = default;
-    CHIC &operator=(CHIC &&) = default;
     // Update dcp
     inline void update_dcp(double delta_cp) {
         e_idelta = std::exp(std::complex<double>(0, flip * delta_cp));
@@ -161,7 +171,7 @@ class CHICDIFF : public CHIC {
     const Eigen::Vector3d unit = Eigen::Vector3d::Ones(3);
 
     Eigen::Matrix3cd I_ijk;                 // Integral matrix
-    Eigen::Matrix3cd comm_dHH, comm_dHH2;   // Commutator matrices
+    Eigen::Matrix3cd comm_dHH, comm_dHH2;   // Anti-commutator matrices
     Eigen::Matrix3cd dJ;              // Derivative amplitude matrix
     Eigen::Matrix3cd dHs;             // Derivative of reduced Hamiltonian
     std::complex<double> cdJ_diag[3], cdJ_off[3];  // Coefficients
