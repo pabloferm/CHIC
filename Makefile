@@ -1,6 +1,6 @@
 # CHIC - Makefile
 CXX      = g++
-CXXFLAGS = -std=c++17 -O3 -march=native -ffast-math -funroll-loops \
+CXXFLAGS = -std=c++26 -O3 -march=native -ffast-math -funroll-loops \
            -fPIC -DNDEBUG \
            -fomit-frame-pointer \
            -fno-trapping-math \
