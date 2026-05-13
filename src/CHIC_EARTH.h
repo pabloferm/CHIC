@@ -7,9 +7,9 @@
 #include <memory>   // std::unique_ptr
 #include <vector>
 
-// =================================================== \\
-// ====== Class for Earth neutrino propagation ======= \\
-// =================================================== \\
+// =================================================== 
+// ====== Class for Earth neutrino propagation ======= 
+// =================================================== 
 
 class CHICEARTH {
 
@@ -35,13 +35,18 @@ public:
   inline void update_dm231(double dm_2_31)   { chic->update_dm231(dm_2_31);    update_vacuum = true; }
  
   // Probability matrix
-  Eigen::Matrix3d compute_oscillations(double E, double cos_zenith, double h = 0.0);
+  virtual Eigen::Matrix3d compute_oscillations(double E, double cos_zenith, double h = 0.0);
  
   // Return amplitude
   [[nodiscard]] const Eigen::Matrix3cd& get_amplitude() const noexcept { return J; }
 
-private:
+  virtual ~CHICEARTH() = default;
+
+protected:
  
+  CHICEARTH(std::unique_ptr<CHIC> chic_ptr,
+            std::string_view earth_model, double detector_depth);
+
   // ---- Per-layer cached quantities (energy-dependent) ----
   struct Layer {
     Eigen::Matrix3cd Hs;            // traceless H 
@@ -51,11 +56,11 @@ private:
     Eigen::Vector3d prod_lambdas;   // pairwise products of eigenvalues
   };
  
-  // ---- Private helpers ----
   void _compute_hamiltonians();                       // fills Layers[]
   void _build_track();                                // fills tracks[]
   void _amplitude();                                  // accumulates J over all layers
-  void _layer_amplitude(double L, const Layer& lay, const bool deepest = false);  // single-layer amplitude
+  void _layer_amplitude(int i_layer, const bool deepest = false);  // single-layer amplitude
+  void _update_amplitude(const bool deepest = false);
  
   // ---- Data members ----
   std::unique_ptr<CHIC>        chic;
@@ -70,23 +75,21 @@ private:
   Eigen::Vector3cd exp_eigenvals;
  
   bool   update_vacuum  = true;
+  bool   update_param   = true;
   int    deepest      = 0;
-  double cos_zenith0, E0;
+  double cos_zenith0{-2.0}, E0{-1.0};
   const double R2_EARTH = R_EARTH * R_EARTH;
   std::complex<double> iL;
 };
  
-#endif // CHICEARTH_H
 
-/*
-// =================================================== \\
-// == Derived class for Earth neutrino propagation === \\
-// == and derivatives ================================ \\
-// =================================================== \\
+// =================================================== 
+// == Derived class for Earth neutrino propagation === 
+// == and derivatives ================================ 
+// =================================================== 
 
 class CHICEARTHDIFF : public CHICEARTH {
  public:
-    // Constructor - inherits from base class
     explicit CHICEARTHDIFF(std::string_view mode = "neutrino",
                       double theta_12 = 0.5836381018669037,
                       double theta_23 = 0.8587019919812102,
@@ -94,16 +97,36 @@ class CHICEARTHDIFF : public CHICEARTH {
                       double delta_cp = 4.084070449666731,
                       double dm2_21 = 7.42e-5,
                       double dm2_31 = 2.51e-3,
-                      std::string_view model   = "PREM4",
+                      std::string_view model   = "PREM10",
                       double detector_depth    = 0.0);
 
+  Eigen::Matrix3d compute_oscillations(double E, double cos_zenith, double h = 0.0) override;
+  Eigen::Matrix3d compute_oscillations_derivatives(std::string_view param, double E, double cos_zenith, double h = 0.0);
 
 private:
  
   // ---- Per-layer cached quantities (energy-dependent) ----
   struct dLayer {
     Eigen::Matrix3cd dHs;                 // derivative of traceless H 
-    Eigen::Matrix3cd comm_dHH, comm_dHH2; // Anti-commutator matrices
+    Eigen::Matrix3cd Hs_dHs_Hs, Hs2_dHs_Hs2;
+    Eigen::Matrix3cd comm_dHsHs, comm_dHsHs2; // Anti-commutator matrices
+    Eigen::Matrix3cd Hs_comm_dHsHs_Hs; 
   };
 
-  */
+  void _compute_hamiltonians_and_anticommutators();
+  void _amplitude_and_diff();                                  // accumulates J over all layers
+  void _layer_amplitude_diff(int i_layer, const bool deepest = false);  // single-layer amplitude derivative
+ 
+ 
+  std::vector<dLayer>  dLayers;   // size = Earth->Nlayers, allocated in constructor
+ 
+  std::string param0{"none"};
+  // Working matrices — pre-allocated to avoid per-call heap traffic
+  Eigen::Matrix3cd dJ;           // accumulated amplitude
+  Eigen::Matrix3cd dJ_layer;     // single-layer amplitude
+  Eigen::Matrix3cd I_ijk;
+  std::complex<double> cdJ_diag[3], cdJ_off[3];  // Coefficients
+ 
+};
+
+#endif // CHICEARTH_H

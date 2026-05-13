@@ -31,7 +31,7 @@ EXAMPLE_BINS = $(EXAMPLE_DIR)/chic_benchmark $(EXAMPLE_DIR)/example
 # Prevent make from deleting intermediate files (library, objects)
 .SECONDARY:
 
-EXAMPLE_BINS = $(EXAMPLE_DIR)/example $(EXAMPLE_DIR)/test_chicearth
+EXAMPLE_BINS = $(EXAMPLE_DIR)/example $(EXAMPLE_DIR)/test_chicearth $(EXAMPLE_DIR)/speed
 
 .SECONDARY:
 .PHONY: all lib examples clean dirs

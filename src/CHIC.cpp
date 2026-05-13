@@ -207,6 +207,12 @@ Eigen::Matrix3d CHICDIFF::compute_oscillations_derivatives(std::string_view para
     return 2.0 * dJ.cwiseProduct(J.conjugate()).real();
 }
 
+void CHICDIFF::compute_hamiltonians_and_derivatives(std::string_view param, double E) {
+    compute_hamiltonians(E);
+    param0 = param;
+    _set_dHs();
+}
+
 void CHICDIFF::_set_dHs() {
     dHs = zero_cache;
     if (param0 == "density") {
@@ -233,8 +239,8 @@ void CHICDIFF::_set_dHs() {
     } else if (param0 != "density") {
       dHs = inv_2E * dHs;
     }
-    comm_dHH.noalias()  = dHs * Hs  + Hs  * dHs;
-    comm_dHH2.noalias() = dHs * Hs2 + Hs2 * dHs;
+    comm_dHsHs.noalias()  = dHs * Hs  + Hs  * dHs;
+    comm_dHsHs2.noalias() = dHs * Hs2 + Hs2 * dHs;
 }
 
 // Computes amplitude derivative matrix
@@ -264,9 +270,9 @@ void CHICDIFF::_amplitude_derivative() {
     dJ.noalias() = cdJ_diag[0] * dHs;
     dJ.noalias()+= cdJ_diag[1] * Hs * dHs * Hs;
     dJ.noalias()+= cdJ_diag[2] * Hs2 * dHs * Hs2;
-    dJ.noalias()+= cdJ_off[0] * comm_dHH;
-    dJ.noalias()+= cdJ_off[1] * comm_dHH2;
-    dJ.noalias()+= cdJ_off[2] * Hs * comm_dHH * Hs;
+    dJ.noalias()+= cdJ_off[0] * comm_dHsHs;
+    dJ.noalias()+= cdJ_off[1] * comm_dHsHs2;
+    dJ.noalias()+= cdJ_off[2] * Hs * comm_dHsHs * Hs;
 }
 
 // === Derivative Hamiltonian builders ===

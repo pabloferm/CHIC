@@ -162,8 +162,11 @@ class CHICDIFF : public CHIC {
     
     // Derivative calculation method
     Eigen::Matrix3d compute_oscillations_derivatives(std::string_view param, double E, double L);
+    void compute_hamiltonians_and_derivatives(std::string_view param, double E);
     // Access to derivative results
     const Eigen::Matrix3cd& get_diff_hamiltonian() const noexcept { return dHs; } // Derivative of the reduced Hamiltonian
+    const Eigen::Matrix3cd& get_comm_dHsHs() const noexcept { return comm_dHsHs; } // Commutator of derivative and hamiltonian
+    const Eigen::Matrix3cd& get_comm_dHsHs2() const noexcept { return comm_dHsHs2; } // Commutator of derivative and hamiltonian squared
     const Eigen::Matrix3cd& get_diff_amplitude  () const noexcept { return dJ;  } // Derivative of the amplitude    
 
  private:
@@ -171,7 +174,7 @@ class CHICDIFF : public CHIC {
     const Eigen::Vector3d unit = Eigen::Vector3d::Ones(3);
 
     Eigen::Matrix3cd I_ijk;                 // Integral matrix
-    Eigen::Matrix3cd comm_dHH, comm_dHH2;   // Anti-commutator matrices
+    Eigen::Matrix3cd comm_dHsHs, comm_dHsHs2;   // Anti-commutator matrices
     Eigen::Matrix3cd dJ;              // Derivative amplitude matrix
     Eigen::Matrix3cd dHs;             // Derivative of reduced Hamiltonian
     std::complex<double> cdJ_diag[3], cdJ_off[3];  // Coefficients

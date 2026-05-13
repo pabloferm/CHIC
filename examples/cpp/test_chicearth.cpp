@@ -1,293 +1,268 @@
 #include "CHIC_EARTH.h"
-
 #include <Eigen/Dense>
-
 #include <chrono>
 #include <cmath>
-#include <cstdio>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <random>
 #include <string>
-#include <vector>
 
-#define sq(x) ((x)*(x))
+// ------------------------------------------------------------------ //
+//  Helpers
+// ------------------------------------------------------------------ //
 
-std::string optimization_level = "3";
-
-using clock_type = std::chrono::high_resolution_clock;
-
-// ============================================================
-// Atmospheric benchmark
-// ============================================================
-
-void Atmospheric_Speed(
-    CHICEARTH& earth,
-    bool quick_osc_param,
-    int n_1,
-    int n_2,
-    FILE* data)
-{
-    const double E  = 3.0;
-    const double cz = -1.0;
-
-    Eigen::Matrix3d probs;
-
-    double speed, speed_sum, speedsq_sum;
-
-    speed_sum   = 0;
-    speedsq_sum = 0;
-
-    // warmup
-    probs = earth.compute_oscillations(E, cz);
-
-    for (int i = 0; i < n_1; i++)
-    {
-        auto start_time = clock_type::now();
-
-        for (int j = 0; j < n_2; j++)
-        {
-            if (quick_osc_param)
-            {
-                double theta23 =
-                        0.72 + i * 0.1 / n_2;
-
-                earth.update_th23(theta23);
-            }
-            else
-            {
-                double dm31 =
-                    2.5e-3 + i * 0.1e-3 / n_2;
-
-                earth.update_dm231(dm31);
-            }
-
-            probs = earth.compute_oscillations(E, cz);
-        }
-
-        auto end_time = clock_type::now();
-
-        speed =
-            std::chrono::duration_cast<
-                std::chrono::duration<double>
-            >(end_time - start_time).count()
-            / n_2 * 1e9;
-
-        speed_sum   += speed;
-        speedsq_sum += sq(speed);
+bool check_unitarity(const Eigen::Matrix3d& P, double tol = 1e-6) {
+  bool ok = true;
+  for (int i = 0; i < 3; ++i) {
+    const double row_sum = P.row(i).sum();
+    const double col_sum = P.col(i).sum();
+    if (std::abs(row_sum - 1.0) > tol) {
+      std::cerr << "  [FAIL] row " << i << " sum = " << row_sum << "\n";
+      ok = false;
     }
-
-    if (quick_osc_param)
-    {
-        fprintf(data, "quick ");
-        printf("quick ");
+    if (std::abs(col_sum - 1.0) > tol) {
+      std::cerr << "  [FAIL] col " << i << " sum = " << col_sum << "\n";
+      ok = false;
     }
-    else
-    {
-        fprintf(data, "full ");
-        printf("full ");
-    }
-
-    printf(
-        "time = %g +- %g ns\n",
-        speed_sum / n_1,
-        sqrt(speedsq_sum / n_1 - sq(speed_sum / n_1))
-    );
-
-    fprintf(
-        data,
-        "%g %g\n",
-        speed_sum / n_1,
-        sqrt(speedsq_sum / n_1 - sq(speed_sum / n_1))
-    );
+  }
+  return ok;
 }
 
-void Atmospheric_Speed()
-{
-    std::string fname =
-        "data/speed/Atmospherics_"
-        + optimization_level
-        + ".txt";
+static const char* flavour[3] = {"e", "mu", "tau"};
 
-    FILE* data = fopen(fname.c_str(), "w");
-
-    if (!data)
-    {
-        perror("fopen failed");
-        return;
-    }
-
-    CHICEARTH earth("neutrino");
-
-    for (int i = 0; i < 2; i++)
-    {
-        Atmospheric_Speed(
-            earth,
-            i == 0,
-            1e4,
-            1e2,
-            data
-        );
-    }
-
-    fclose(data);
+void print_matrix(const Eigen::Matrix3d& P) {
+  std::cout << std::fixed << std::setprecision(6);
+  std::cout << "         -> e        -> mu       -> tau\n";
+  for (int a = 0; a < 3; ++a) {
+    std::cout << "  nu_" << flavour[a] << " ";
+    for (int b = 0; b < 3; ++b)
+      std::cout << std::setw(12) << P(a, b);
+    std::cout << "\n";
+  }
 }
 
-// ============================================================
-// E vs cosz benchmark
-// ============================================================
+// ------------------------------------------------------------------ //
+//  1. Spot-check
+// ------------------------------------------------------------------ //
+void test_spot_checks(CHICEARTHDIFF& earth) {
+  std::cout << "\n========== Spot checks ==========\n";
 
-void E_vs_cosz_Speed(
-    CHICEARTH& earth,
-    int nE,
-    int ncosz,
-    FILE* data)
-{
-    std::vector<double> Es;
-    std::vector<double> coszs;
+  const double cases[][2] = {
+      {1.0,  -1.0},
+      {1.0,  -0.5},
+      {10.0, -1.0},
+      {10.0, -0.5},
+      {10.0, -1.0},
+  };
 
-    double Emin     = 2;
-    double Emax     = 40;
-
-    double coszmin  = -1;
-    double coszmax  = -0.9999999;
-
-    double Estep    = (Emax - Emin) / nE;
-    double coszstep = (coszmax - coszmin) / ncosz;
-
-    Es.reserve(nE);
-    coszs.reserve(ncosz);
-
-    for (int i = 0; i < nE; i++)
-        Es.emplace_back(Emin + i * Estep);
-
-    for (int i = 0; i < ncosz; i++)
-        coszs.emplace_back(coszmin + i * coszstep);
-
-    // warmup
-    earth.compute_oscillations(Es[0], coszs[0]);
-
-    int n_1 = 5e1;
-    int n_2 = 5e1;
-
-    double speed;
-    double speed_sum;
-    double speedsq_sum;
-    double speed_mean;
-    double speed_std;
-
-    speed_sum   = 0;
-    speedsq_sum = 0;
-
-    Eigen::Matrix3d probs;
-
-    for (int i = 0; i < n_1; i++)
-    {
-        auto start_time = clock_type::now();
-
-        for (int j = 0; j < n_2; j++)
-        {
-            earth.update_dm231(
-                2.5e-3 + i * 0.1e-3 / n_2
-            );
-
-            for (int ie = 0; ie < nE; ie++)
-            {
-                for (int icz = 0; icz < ncosz; icz++)
-                {
-                    probs =
-                        earth.compute_oscillations(
-                            Es[ie],
-                            coszs[icz]
-                        );
-                }
-            }
-        }
-
-        auto end_time = clock_type::now();
-
-        speed =
-            std::chrono::duration_cast<
-                std::chrono::duration<double>
-            >(end_time - start_time).count()
-            / n_2 * 1e9;
-
-        speed_sum   += speed;
-        speedsq_sum += sq(speed);
-    }
-
-    speed_mean =
-        speed_sum / n_1 / nE / ncosz;
-
-    speed_std =
-        sqrt(
-            speedsq_sum / n_1
-            - sq(speed_sum / n_1)
-        ) / nE / ncosz;
-
-    printf(
-        "nE = %d, ncosz = %d, time = %g +- %g ns\n",
-        nE,
-        ncosz,
-        speed_mean,
-        speed_std
-    );
-
-    fprintf(
-        data,
-        "%d %d %g %g\n",
-        nE,
-        ncosz,
-        speed_mean,
-        speed_std
-    );
+  bool all_ok = true;
+  for (auto& c : cases) {
+    const double E          = c[0];
+    const double cos_zenith = c[1];
+    Eigen::Matrix3d P = earth.compute_oscillations(E, cos_zenith);
+    std::cout << "\nE = " << E << " GeV,  cos_zenith = " << cos_zenith << "\n";
+    print_matrix(P);
+    const bool ok = check_unitarity(P);
+    std::cout << "  Unitarity: " << (ok ? "PASS" : "FAIL") << "\n";
+    all_ok &= ok;
+  }
+  std::cout << "\nSpot-check unitarity overall: " << (all_ok ? "PASS" : "FAIL") << "\n";
 }
 
-void E_vs_cosz_Speed()
-{
-    std::string fname =
-        "data/speed/E_vs_cosz_"
-        + optimization_level
-        + ".txt";
+// ------------------------------------------------------------------ //
+//  2. Unitarity sweep
+// ------------------------------------------------------------------ //
+void test_unitarity_grid(CHICEARTHDIFF& earth, int NE = 40, int Ncz = 40,
+                         double tol = 1e-6) {
+  std::cout << "\n========== Unitarity grid sweep ("
+            << NE << " x " << Ncz << " points) ==========\n";
 
-    FILE* data = fopen(fname.c_str(), "w");
+  const double log_E_min = std::log10(0.1);
+  const double log_E_max = std::log10(100.0);
+  const double cz_min    = -1.0;
+  const double cz_max    = -0.01;
 
-    if (!data)
-    {
-        perror("fopen failed");
-        return;
+  int failures = 0;
+  for (int ie = 0; ie < NE; ++ie) {
+    const double E = std::pow(10.0, log_E_min +
+                              (log_E_max - log_E_min) * ie / (NE - 1));
+    for (int icz = 0; icz < Ncz; ++icz) {
+      const double cz = cz_min + (cz_max - cz_min) * icz / (Ncz - 1);
+      Eigen::Matrix3d P = earth.compute_oscillations(E, cz);
+      if (!check_unitarity(P, tol)) {
+        ++failures;
+        std::cerr << "  Unitarity FAIL at E=" << E
+                  << " GeV, cos_zenith=" << cz << "\n";
+      }
     }
-
-    CHICEARTH earth("neutrino");
-
-    for (int j = 1; j <= 3; j++)
-    {
-        E_vs_cosz_Speed(
-            earth,
-            1,
-            pow(10, j),
-            data
-        );
-
-        E_vs_cosz_Speed(
-            earth,
-            pow(10, j),
-            1,
-            data
-        );
-    }
-
-    fclose(data);
+  }
+  std::cout << "Failures: " << failures << " / " << NE * Ncz << "  -> "
+            << (failures == 0 ? "PASS" : "FAIL") << "\n";
 }
 
-// ============================================================
-// main
-// ============================================================
+// ------------------------------------------------------------------ //
+//  3. Performance benchmark
+//
+//  Two scenarios timed separately:
+//
+//  A) Fixed energy, varying cos_zenith:
+//     Hamiltonians are cached — measures only _build_track + _amplitude.
+//     Typical use case: scanning zenith at a fixed energy bin.
+//
+//  B) Varying energy AND cos_zenith:
+//     Full cost per call including _compute_hamiltonians.
+//     Worst-case / uncached scenario.
+// ------------------------------------------------------------------ //
+void test_performance(CHICEARTHDIFF& earth, int NE = 200, int Ncz = 200) {
+  using clock = std::chrono::high_resolution_clock;
 
-int main()
-{
-    system("mkdir -p data/speed");
+  const double log_E_min = std::log10(0.1);
+  const double log_E_max = std::log10(100.0);
+  const double cz_min    = -1.0;
+  const double cz_max    = -0.01;
 
-    Atmospheric_Speed();
+  // Pre-build grids — keep log/pow out of the timed region
+  std::vector<double> energies(NE), czs(Ncz);
+  for (int ie  = 0; ie  < NE;  ++ie)
+    energies[ie] = std::pow(10.0, log_E_min + (log_E_max - log_E_min) * ie / (NE - 1));
+  for (int icz = 0; icz < Ncz; ++icz)
+    czs[icz] = cz_min + (cz_max - cz_min) * icz / (Ncz - 1);
 
-    E_vs_cosz_Speed();
+  // Accumulator — prevents the compiler from dead-store-eliminating the calls
+  double sink = 0.0;
 
-    return 0;
+  // ---- A) Fixed energy, varying cos_zenith ----
+  {
+    const double E_fixed = energies[NE / 2];
+    earth.compute_oscillations(E_fixed, czs[0]); // warm-up: cache Hamiltonians
+
+    auto t0 = clock::now();
+    for (int icz = 0; icz < Ncz; ++icz)
+      sink += earth.compute_oscillations(E_fixed, czs[icz]).sum();
+    auto t1 = clock::now();
+
+    const double total_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    const double per_us   = std::chrono::duration<double, std::micro>(t1 - t0).count() / Ncz;
+    std::cout << "\n========== Performance A: fixed E=" << E_fixed
+              << " GeV, varying cos_zenith ==========\n"
+              << "  Trajectories  : " << Ncz << "\n"
+              << "  Total         : " << std::fixed << std::setprecision(3)
+              << total_ms << " ms\n"
+              << "  Per trajectory: " << std::setprecision(3) << per_us << " us\n";
+  }
+
+  // ---- B) Varying energy AND cos_zenith ----
+  {
+    earth.compute_oscillations(energies[0], czs[0]); // warm-up
+
+    auto t0 = clock::now();
+    for (int ie = 0; ie < NE; ++ie)
+      for (int icz = 0; icz < Ncz; ++icz)
+        sink += earth.compute_oscillations(energies[ie], czs[icz]).sum();
+    auto t1 = clock::now();
+
+    const int    Ntraj    = NE * Ncz;
+    const double total_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    const double per_us   = std::chrono::duration<double, std::micro>(t1 - t0).count() / Ntraj;
+    std::cout << "\n========== Performance B: varying E and cos_zenith ==========\n"
+              << "  Trajectories  : " << Ntraj << "\n"
+              << "  Total         : " << std::fixed << std::setprecision(3)
+              << total_ms << " ms\n"
+              << "  Per trajectory: " << std::setprecision(3) << per_us << " us\n";
+  }
+
+  // Prevent sink from being optimised away
+  if (sink == 0.0) std::cout << "";
+}
+
+// ------------------------------------------------------------------ //
+//  4. Dump grid + gnuplot script
+// ------------------------------------------------------------------ //
+void dump_and_plot(CHICEARTHDIFF& earth,
+                   int NE = 200, int Ncz = 200,
+                   const std::string& datafile  = "oscillations.dat",
+                   const std::string& scriptfile = "plot_oscillations.gp") {
+  std::cout << "\n========== Generating gnuplot data: " << datafile << " ==========\n";
+
+  const double log_E_min = std::log10(2.0);
+  const double log_E_max = std::log10(17.0);
+  const double cz_min    = -1.0;
+  const double cz_max    =  0.0;
+
+  std::ofstream dat(datafile);
+  if (!dat) { std::cerr << "Cannot open " << datafile << "\n"; return; }
+
+  dat << "# E[GeV]  cos_zenith  "
+         "Pee  Pemu  Petau  "
+         "Pmue  Pmumu  Pmutau  "
+         "Ptaue  Ptaumu  Ptautau\n";
+
+  for (int icz = 0; icz < Ncz; ++icz) {
+    const double cz = cz_min + (cz_max - cz_min) * icz / (Ncz - 1);
+    if (icz > 0) dat << "\n";
+    for (int ie = 0; ie < NE; ++ie) {
+      const double E = std::pow(10.0, log_E_min +
+                                (log_E_max - log_E_min) * ie / (NE - 1));
+      // Eigen::Matrix3d P = earth.compute_oscillations_derivatives("dm231", E, cz);
+      earth.update_th23(0.8587019919812102);
+      Eigen::Matrix3d Pa = earth.compute_oscillations(E, cz);
+      earth.update_th23(0.8587019919812102 + 0.01);
+      Eigen::Matrix3d Pb = earth.compute_oscillations(E, cz);
+      Eigen::Matrix3d P = (Pb-Pa) / 0.01;
+      dat << std::scientific << std::setprecision(6) << E << "  " << cz;
+      for (int a = 0; a < 3; ++a)
+        for (int b = 0; b < 3; ++b)
+          dat << "  " << P(a, b);
+      dat << "\n";
+    }
+  }
+  dat.close();
+  std::cout << "Data written to " << datafile << "\n";
+
+  std::ofstream gp(scriptfile);
+  if (!gp) { std::cerr << "Cannot open " << scriptfile << "\n"; return; }
+
+  const char* titles[3][3] = {
+    {"P_{ee}",    "P_{e#mu}",    "P_{e#tau}"},
+    {"P_{#mue}",  "P_{#mu#mu}",  "P_{#mu#tau}"},
+    {"P_{#taue}", "P_{#tau#mu}", "P_{#tau#tau}"},
+  };
+
+  gp << "set terminal pngcairo size 1200,1100 enhanced font 'Arial,11'\n"
+     << "set output 'oscillations.png'\n"
+     << "set multiplot layout 3,3 title 'Neutrino oscillation probabilities (Earth)'\n"
+     << "set ylabel 'E [GeV]'\n"
+     << "set xlabel 'cos(zenith)'\n"
+     << "set palette rgbformulae 33,13,10\n"
+    //  << "set log y\n"
+     << "set yrange [2.0:17]\n"
+     << "set xrange [-1:0]\n";
+
+  int col = 3;
+  for (int a = 0; a < 3; ++a)
+    for (int b = 0; b < 3; ++b, ++col)
+      gp << "unset yrange\n"                   // let stats see ALL rows
+        << "unset xrange\n"
+        << "stats '" << datafile << "' using " << col << " nooutput\n"
+        << "set cbrange [STATS_min:STATS_max]\n"
+        << "set yrange [2.0:17]\n"              // restore after stats
+        << "set xrange [-1:0]\n"
+        << "set title '" << titles[a][b] << "'\n"
+        << "plot '" << datafile << "' using 2:1:" << col << " with image notitle\n";
+}
+
+// << "set logscale x\n"
+// ------------------------------------------------------------------ //
+//  main
+// ------------------------------------------------------------------ //
+int main() {
+  CHICEARTHDIFF earth("neutrino");
+
+  test_spot_checks(earth);
+  test_unitarity_grid(earth);
+  test_performance(earth);
+  dump_and_plot(earth);
+
+  return 0;
 }
