@@ -146,7 +146,6 @@ void CHICEARTHDIFF::_compute_hamiltonians_and_anticommutators() {
     dLayers[i].Hs2_dHs_Hs2       = Layers[i].Hs2 * dLayers[i].dHs * Layers[i].Hs2;
     dLayers[i].comm_dHsHs        = chic_diff->get_comm_dHsHs();
     dLayers[i].comm_dHsHs2       = chic_diff->get_comm_dHsHs2();
-    // comm_dHsHs = dHs*Hs + Hs*dHs; sandwiching: H*(dH*H + H*dH)*H
     dLayers[i].Hs_comm_dHsHs_Hs  = Layers[i].Hs * dLayers[i].comm_dHsHs * Layers[i].Hs;
   }
   update_vacuum  = false;
@@ -156,7 +155,6 @@ void CHICEARTHDIFF::_compute_hamiltonians_and_anticommutators() {
 // NOTE: _layer_amplitude(i_layer, is_deepest) MUST be called before this
 //       for the same layer — this function reads iL, exp_eigenvals, J_layer, J.
 void CHICEARTHDIFF::_layer_amplitude_diff(int i_layer, bool is_deepest) {
-  // Integral matrix I_ijk (symmetric — all 9 entries set explicitly)
   I_ijk.diagonal() = iL * Layers[i_layer].diff_lambdas.cwiseProduct(exp_eigenvals);
   I_ijk(0,1) = I_ijk(1,0) = (Layers[i_layer].diff_lambdas[0]*exp_eigenvals[1] - Layers[i_layer].diff_lambdas[1]*exp_eigenvals[0])
              / (Layers[i_layer].lambdas[1] - Layers[i_layer].lambdas[0]);
@@ -193,11 +191,6 @@ void CHICEARTHDIFF::_layer_amplitude_diff(int i_layer, bool is_deepest) {
 }
 
 void CHICEARTHDIFF::_amplitude_and_diff() {
-  // Correct order per product rule:
-  //   1. _compute_J_layer  — fills iL, exp_eigenvals, J_layer  (shared by both)
-  //   2. _layer_amplitude_diff — updates dJ using J_old and J_layer
-  //   3. _update_J         — updates J = J_layer * J_old * J_layer
-  // dJ must use J_old (pre-update), so it must come before _update_J.
   _compute_J_layer(deepest, true);
   _layer_amplitude_diff(deepest, true);
   _update_J(true);
@@ -220,8 +213,6 @@ Eigen::Matrix3d CHICEARTHDIFF::compute_oscillations(double E, double cos_zenith,
 
   if (E != E0 || update_vacuum) {
     E0 = E;
-    // FIX: always use the anticommutator version so dLayers stays in sync
-    // with Layers; avoids stale derivative data on a subsequent derivative call.
     _compute_hamiltonians_and_anticommutators();
   }
 

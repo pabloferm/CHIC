@@ -4,25 +4,6 @@
 #include <Eigen/Dense>
 #include "opt_constants.h"
 
-// #define CHIC_EIGEN_VERSION_STRING \
-//     "Eigen " \
-//     EIGEN_STRINGIFY(EIGEN_WORLD_VERSION) "." \
-//     EIGEN_STRINGIFY(EIGEN_MAJOR_VERSION) "." \
-//     EIGEN_STRINGIFY(EIGEN_MINOR_VERSION)
- 
-// // Hard error on Eigen < 5 (MAJOR < 5): the real/complex promotion rules
-// // that CHIC relies on were tightened in Eigen 5.
-// static_assert(EIGEN_MAJOR_VERSION >= 5,
-//     "CHIC requires Eigen 5 or later (found " CHIC_EIGEN_VERSION_STRING "). "
-//     "Please update your Eigen installation.");
- 
-// // Emit the detected version as a compiler note during every build.
-// #pragma message("CHIC: building with " CHIC_EIGEN_VERSION_STRING)
-
-
-// ================================================================= \\
-// == Base class for CHIC neutrino oscillation probabilities only == \\
-// ================================================================= \\
 
 class CHIC {
  public:
@@ -57,22 +38,12 @@ class CHIC {
     inline void update_dm231(double dm_2_31) {dm2_31 = dm_2_31; update_pmns = true;}
     // Update density
     inline void update_density(double rho) { 
-        density = rho; 
-        // if (density == 0.0) {
-        //     vacuum = true;
-        //     update_matter = false;
-        //     return
-        // }
+        density = rho;
         update_matter = true;
     }
     // Update Ye
     inline void update_Ye(double Ye) { 
         Y_e = Ye;      
-        // if (Y_e == 0.0) {
-        //     vacuum = true;
-        //     update_matter = false;
-        //     return
-        // }
         update_matter = true; }
 
     // Called to compute oscillations
