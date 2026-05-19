@@ -11,7 +11,7 @@ int main()
     // ------------------------------------- //
     // Set the vacuum oscillation parameters //
     // ------------------------------------- //
-    CHIC chic;
+    CHICDIFF chic;
     chic.update_dcp(4.1);
     chic.update_dm231(2.5e-3);
     chic.update_dm221(7.5e-5);
@@ -23,14 +23,14 @@ int main()
     // ------------------------------- //
     // Set the sweep parameters        //
     // ------------------------------- //
-    const int    numPoints = 1000;
+    const int    numPoints = 500;
     const double Emin      = 0.05;    // GeV
     const double Emax      = 50.0;    // GeV
     const double Lmin      = 0.1;     // km
     const double Lmax      = 10000.;  // km
     const double L_fixed   = 295.;    // km  (used in energy-only loop)
     const double E_fixed   = 2.5;     // GeV (used in baseline-only loop)
-    const int    warmup    = 50;     // calls to skip before timing
+    const int    warmup    = 200;     // calls to skip before timing
 
     long long total_duration_ns;
     long long count;
@@ -57,8 +57,9 @@ int main()
             double s = static_cast<double>(j) / (numPoints - 1);
             double L = Lmin * std::pow(Lmax / Lmin, s);
 
-            auto start = high_resolution_clock::now();
             Eigen::Matrix3d prob = chic.compute_oscillations(E, L);
+            auto start = high_resolution_clock::now();
+            Eigen::Matrix3d dprob = chic.compute_oscillations_derivatives("dcp", E, L);
             auto end   = high_resolution_clock::now();
 
             if (count >= warmup)
@@ -96,8 +97,9 @@ int main()
         double t = static_cast<double>(i) / (numPoints - 1);
         double E = Emin * std::pow(Emax / Emin, t);
 
-        auto start = high_resolution_clock::now();
         Eigen::Matrix3d prob = chic.compute_oscillations(E, L_fixed);
+        auto start = high_resolution_clock::now();
+        Eigen::Matrix3d dprob = chic.compute_oscillations_derivatives("dcp", E, L_fixed);
         auto end   = high_resolution_clock::now();
 
         if (count >= warmup)
@@ -134,8 +136,9 @@ int main()
         double s = static_cast<double>(j) / (numPoints - 1);
         double L = Lmin * std::pow(Lmax / Lmin, s);
 
-        auto start = high_resolution_clock::now();
         Eigen::Matrix3d prob = chic.compute_oscillations(E_fixed, L);
+        auto start = high_resolution_clock::now();
+        Eigen::Matrix3d dprob = chic.compute_oscillations_derivatives("dcp", E_fixed, L);
         auto end   = high_resolution_clock::now();
 
         if (count >= warmup)
