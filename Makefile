@@ -65,7 +65,7 @@ EGG_PY = bindings/chic.egg-info
 
 # Examples
 EXAMPLE_DIR  = examples/cpp
-EXAMPLE_BINS = $(EXAMPLE_DIR)/chic_benchmark $(EXAMPLE_DIR)/example
+EXAMPLE_BINS = $(EXAMPLE_DIR)/chic_benchmark $(EXAMPLE_DIR)/example $(EXAMPLE_DIR)/chicdiff_benchmark $(EXAMPLE_DIR)/chic_profile $(EXAMPLE_DIR)/chicdiff2_benchmark
 
 # Prevent make from deleting intermediate files (library, objects)
 .SECONDARY:

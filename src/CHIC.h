@@ -4,25 +4,9 @@
 #include <Eigen/Dense>
 #include "opt_constants.h"
 
-// #define CHIC_EIGEN_VERSION_STRING \
-//     "Eigen " \
-//     EIGEN_STRINGIFY(EIGEN_WORLD_VERSION) "." \
-//     EIGEN_STRINGIFY(EIGEN_MAJOR_VERSION) "." \
-//     EIGEN_STRINGIFY(EIGEN_MINOR_VERSION)
- 
-// // Hard error on Eigen < 5 (MAJOR < 5): the real/complex promotion rules
-// // that CHIC relies on were tightened in Eigen 5.
-// static_assert(EIGEN_MAJOR_VERSION >= 5,
-//     "CHIC requires Eigen 5 or later (found " CHIC_EIGEN_VERSION_STRING "). "
-//     "Please update your Eigen installation.");
- 
-// // Emit the detected version as a compiler note during every build.
-// #pragma message("CHIC: building with " CHIC_EIGEN_VERSION_STRING)
-
-
-// ================================================================= \\
-// == Base class for CHIC neutrino oscillation probabilities only == \\
-// ================================================================= \\
+// ================================================================= 
+// == Base class for CHIC neutrino oscillation probabilities only == 
+// ================================================================= 
 
 class CHIC {
  public:
@@ -45,11 +29,11 @@ class CHIC {
         update_pmns = true;
     }
     // Update theta_23
-    inline void update_th23(double theta_23) {c23 = std::cos(theta_23); s23 = std::sin(theta_23); update_pmns = true; }
+    inline void update_th23(double theta_23) {__builtin_sincos(theta_23, &s23, &c23); update_pmns = true; }
     // Update theta_12
-    inline void update_th12(double theta_12) {c12 = std::cos(theta_12); s12 = std::sin(theta_12); update_pmns = true; }
+    inline void update_th12(double theta_12) {__builtin_sincos(theta_12, &s12, &c12);; update_pmns = true; }
     // Update theta_13
-    inline void update_th13(double theta_13) {c13 = std::cos(theta_13); s13 = std::sin(theta_13); update_pmns = true; }
+    inline void update_th13(double theta_13) {__builtin_sincos(theta_13, &s13, &c13);; update_pmns = true; }
 
     // Update dm221
     inline void update_dm221(double dm_2_21) {dm2_21 = dm_2_21; update_pmns = true;}
@@ -58,21 +42,11 @@ class CHIC {
     // Update density
     inline void update_density(double rho) { 
         density = rho; 
-        // if (density == 0.0) {
-        //     vacuum = true;
-        //     update_matter = false;
-        //     return
-        // }
         update_matter = true;
     }
     // Update Ye
     inline void update_Ye(double Ye) { 
         Y_e = Ye;      
-        // if (Y_e == 0.0) {
-        //     vacuum = true;
-        //     update_matter = false;
-        //     return
-        // }
         update_matter = true; }
 
     // Called to compute oscillations
@@ -96,7 +70,7 @@ class CHIC {
     double                  get_detH0          () const noexcept { return detH0;           }
     double                  get_flip           () const noexcept { return flip;            }
 
- protected:
+ public:
     static constexpr double EPSILON = 1e-20;
 
     // Scalars for the Hamiltonian
@@ -105,7 +79,8 @@ class CHIC {
     double E0{}, L0{}, inv_2E{}, inv_4E_squared{};
     double flip = 1.0;
     double Vs2_diag0{}, Vs2_diag1{};
-    std::complex<double> iL{}, e_idelta{}, e_midelta{};
+    double iL{};
+    std::complex<double> e_idelta{}, e_midelta{};
     
     // Invariants
     double TrH, TrHs2, DetHs, detH0, trK0;
@@ -121,11 +96,7 @@ class CHIC {
     Eigen::Matrix3cd U;                        // PMNS matrix
     Eigen::Matrix3cd Hs0, Hs;                  // Reduced Hamiltonian
     Eigen::Matrix3cd Hs2, Hs0_2;               // Reduced squared Hamiltonian
-    Eigen::Matrix3cd re_Hs0Vs, re_Hs0Vs0;      // Vacuum hamiltonian and matter potential product
-    Eigen::Matrix3d m2 = zero_cache;           // Mass squared difference matrix
-    Eigen::Matrix3d v = zero_cache;            // Matter potential matrix
-    Eigen::Matrix3d Vs = zero_cache;           // Reduced matter potential matrix
-    Eigen::Matrix3d Vs2 = zero_cache;          // Reduced matter potential squared
+    Eigen::Matrix3cd re_Hs0Vs0;      // Vacuum hamiltonian and matter potential product
     Eigen::Matrix3cd J;                        // Amplitude matrix
     
     // Flag to denote if matrix update is needed.
@@ -143,9 +114,9 @@ class CHIC {
 };
 
 
-// =================================================== \\
-// = Derived class for probabilities and derivatives = \\
-// =================================================== \\
+// =================================================== 
+// = Derived class for probabilities and derivatives = 
+// =================================================== 
 
 class CHICDIFF : public CHIC {
  public:
@@ -166,14 +137,15 @@ class CHICDIFF : public CHIC {
     const Eigen::Matrix3cd& get_diff_hamiltonian() const noexcept { return dHs; } // Derivative of the reduced Hamiltonian
     const Eigen::Matrix3cd& get_diff_amplitude  () const noexcept { return dJ;  } // Derivative of the amplitude    
 
- private:
+ public:
     std::string param0{"none"};
     const Eigen::Vector3d unit = Eigen::Vector3d::Ones(3);
 
     Eigen::Matrix3cd I_ijk;                 // Integral matrix
-    Eigen::Matrix3cd comm_dHH, comm_dHH2;   // Commutator matrices
-    Eigen::Matrix3cd dJ;              // Derivative amplitude matrix
-    Eigen::Matrix3cd dHs;             // Derivative of reduced Hamiltonian
+    Eigen::Matrix3cd dJ;                    // Derivative amplitude matrix
+    Eigen::Matrix3cd dHs;  // Derivative of reduced Hamiltonian
+    Eigen::Matrix3cd Hs_comm_dHsHs_Hs, Hs2_dHs_Hs2, Hs_dHs_Hs;
+    Eigen::Matrix3cd comm_dHsHs, comm_dHsHs2;   // Commutator matrices
     std::complex<double> cdJ_diag[3], cdJ_off[3];  // Coefficients
     
     void _amplitude_derivative();
