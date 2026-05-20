@@ -77,9 +77,8 @@ protected:
   bool   update_vacuum  = true;
   bool   update_param   = true;
   int    deepest      = 0;
-  double cos_zenith0{-2.0}, E0{-1.0};
+  double cos_zenith0{-2.0}, E0{-1.0}, iL;
   const double R2_EARTH = R_EARTH * R_EARTH;
-  std::complex<double> iL;
 };
  
 

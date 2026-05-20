@@ -1,6 +1,6 @@
 #include "CHIC_EARTH.h"
-#include "CHIC.h"
-#include "earth.h"
+// #include "CHIC.h"
+// #include "earth.h"
 #include <cassert>
  
 // =================================================== //
@@ -68,10 +68,16 @@ void CHICEARTH::_build_track() {
 void CHICEARTH::_layer_amplitude(int i_layer, const bool deepest) {
   // Exponentials
   
-  if (deepest) iL = std::complex<double>(0.0, -2*tracks[i_layer] * OptConstants::BASELINE_FACTOR);
-  else iL = std::complex<double>(0.0, -std::abs(tracks[i_layer] - tracks[i_layer - 1]) * OptConstants::BASELINE_FACTOR);
+  if (deepest) iL = -2*tracks[i_layer] * OptConstants::BASELINE_FACTOR;
+  else iL = -std::abs(tracks[i_layer] - tracks[i_layer - 1]) * OptConstants::BASELINE_FACTOR;
 
-  exp_eigenvals = Layers[i_layer].diff_lambdas.array() * (iL * Layers[i_layer].lambdas).array().exp();
+  double s, c;
+  for (int k = 0; k < 3; ++k) {
+    __builtin_sincos(iL * Layers[i_layer].lambdas[k], &s, &c);
+    exp_eigenvals[k] = Layers[i_layer].diff_lambdas[k] * std::complex<double>(c, s);
+  }
+
+  // exp_eigenvals = Layers[i_layer].diff_lambdas.array() * (iL * Layers[i_layer].lambdas).array().exp();
   
   J_layer.noalias() = exp_eigenvals.sum() * Layers[i_layer].Hs2;
   J_layer.noalias() += Layers[i_layer].lambdas.dot(exp_eigenvals) * Layers[i_layer].Hs;
@@ -148,11 +154,11 @@ void CHICEARTHDIFF::_compute_hamiltonians_and_anticommutators() {
     Layers[i].Hs                = chic_diff->get_hamiltonian();
     Layers[i].Hs2               = chic_diff->get_hamiltonian_squared();
     dLayers[i].dHs              = chic_diff->get_diff_hamiltonian();
-    dLayers[i].Hs_dHs_Hs        = Layers[i].Hs * dLayers[i].dHs * Layers[i].Hs;
-    dLayers[i].Hs2_dHs_Hs2      = Layers[i].Hs2 * dLayers[i].dHs * Layers[i].Hs2;
+    dLayers[i].Hs_dHs_Hs        = chic_diff->get_Hs_dHs_Hs();
+    dLayers[i].Hs2_dHs_Hs2      = chic_diff->get_Hs2_dHs_Hs2();
     dLayers[i].comm_dHsHs       = chic_diff->get_comm_dHsHs();
     dLayers[i].comm_dHsHs2      = chic_diff->get_comm_dHsHs2();
-    dLayers[i].Hs_comm_dHsHs_Hs = Layers[i].Hs * dLayers[i].comm_dHsHs * Layers[i].Hs;
+    dLayers[i].Hs_comm_dHsHs_Hs = chic_diff->get_Hs_comm_dHsHs_Hs();
   }
   update_vacuum = false;
   update_param = false;
@@ -161,7 +167,7 @@ void CHICEARTHDIFF::_compute_hamiltonians_and_anticommutators() {
 
 void CHICEARTHDIFF::_layer_amplitude_diff(int i_layer, const bool deepest) {
   // Integral matrix (symmetric)
-    I_ijk.diagonal() = iL * Layers[i_layer].diff_lambdas.cwiseProduct(exp_eigenvals);
+    I_ijk.diagonal() = std::complex<double>(0.0, iL) * Layers[i_layer].diff_lambdas.cwiseProduct(exp_eigenvals);
     I_ijk(0, 1) = I_ijk(1, 0) = (Layers[i_layer].diff_lambdas[0]*exp_eigenvals[1] - Layers[i_layer].diff_lambdas[1]*exp_eigenvals[0])
                 / (Layers[i_layer].lambdas[1] - Layers[i_layer].lambdas[0]);
     I_ijk(0, 2) = I_ijk(2, 0) = (Layers[i_layer].diff_lambdas[2]*exp_eigenvals[0] - Layers[i_layer].diff_lambdas[0]*exp_eigenvals[2])

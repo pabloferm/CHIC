@@ -185,10 +185,11 @@ void dump_and_plot(CHICEARTHDIFF& earth,
                    const std::string& scriptfile = "plot_oscillations.gp") {
   std::cout << "\n========== Generating gnuplot data: " << datafile << " ==========\n";
 
-  const double log_E_min = std::log10(2.0);
-  const double log_E_max = std::log10(17.0);
+  const double log_E_min = std::log10(1.0);
+  const double log_E_max = std::log10(15.0);
   const double cz_min    = -1.0;
   const double cz_max    =  0.0;
+  // earth.update_dm231(-2.511e-3);
 
   std::ofstream dat(datafile);
   if (!dat) { std::cerr << "Cannot open " << datafile << "\n"; return; }
@@ -204,12 +205,12 @@ void dump_and_plot(CHICEARTHDIFF& earth,
     for (int ie = 0; ie < NE; ++ie) {
       const double E = std::pow(10.0, log_E_min +
                                 (log_E_max - log_E_min) * ie / (NE - 1));
-      // Eigen::Matrix3d P = earth.compute_oscillations_derivatives("dm231", E, cz);
-      earth.update_th23(0.8587019919812102);
-      Eigen::Matrix3d Pa = earth.compute_oscillations(E, cz);
-      earth.update_th23(0.8587019919812102 + 0.01);
-      Eigen::Matrix3d Pb = earth.compute_oscillations(E, cz);
-      Eigen::Matrix3d P = (Pb-Pa) / 0.01;
+      Eigen::Matrix3d P = earth.compute_oscillations_derivatives("dm231", E, cz);
+      // earth.update_th23(0.8587019919812102);
+      // Eigen::Matrix3d Pa = earth.compute_oscillations(E, cz);
+      // earth.update_th23(0.8587019919812102 + 0.01);
+      // Eigen::Matrix3d Pb = earth.compute_oscillations(E, cz);
+      // Eigen::Matrix3d P = (Pb-Pa) / 0.01;
       dat << std::scientific << std::setprecision(6) << E << "  " << cz;
       for (int a = 0; a < 3; ++a)
         for (int b = 0; b < 3; ++b)
@@ -236,7 +237,7 @@ void dump_and_plot(CHICEARTHDIFF& earth,
      << "set xlabel 'cos(zenith)'\n"
      << "set palette rgbformulae 33,13,10\n"
     //  << "set log y\n"
-     << "set yrange [2.0:17]\n"
+     << "set yrange [1.0: 15.0]\n"
      << "set xrange [-1:0]\n";
 
   int col = 3;
@@ -246,7 +247,8 @@ void dump_and_plot(CHICEARTHDIFF& earth,
         << "unset xrange\n"
         << "stats '" << datafile << "' using " << col << " nooutput\n"
         << "set cbrange [STATS_min:STATS_max]\n"
-        << "set yrange [2.0:17]\n"              // restore after stats
+        // << "set log y\n"
+        << "set yrange [1.0: 15.0]\n"              // restore after stats
         << "set xrange [-1:0]\n"
         << "set title '" << titles[a][b] << "'\n"
         << "plot '" << datafile << "' using 2:1:" << col << " with image notitle\n";
@@ -257,7 +259,7 @@ void dump_and_plot(CHICEARTHDIFF& earth,
 //  main
 // ------------------------------------------------------------------ //
 int main() {
-  CHICEARTHDIFF earth("neutrino");
+  CHICEARTHDIFF earth("antineutrino");
 
   test_spot_checks(earth);
   test_unitarity_grid(earth);
