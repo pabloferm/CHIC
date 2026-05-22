@@ -1,5 +1,4 @@
 #include "CHIC.h"
-#include <complex>
 
 // =================================================================
 // == Base class for CHIC neutrino oscillation probabilities only ==

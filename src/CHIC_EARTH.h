@@ -3,7 +3,6 @@
  
 #include "CHIC.h"
 #include "earth.h"
-#include <Eigen/Dense>
 #include <memory>   // std::unique_ptr
 #include <vector>
 

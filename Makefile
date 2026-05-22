@@ -28,6 +28,9 @@ LIB_TARGET = $(BUILD_DIR)/libchic.a
 EXAMPLE_DIR  = examples/cpp
 EXAMPLE_BINS = $(EXAMPLE_DIR)/chic_benchmark $(EXAMPLE_DIR)/example
 
+# Python
+PYTHON = bindings
+
 # Prevent make from deleting intermediate files (library, objects)
 .SECONDARY:
 
@@ -71,5 +74,6 @@ $(EXAMPLE_DIR)/%: $(BUILD_DIR)/%.o $(LIB_TARGET)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 clean:
-	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/*.a $(EXAMPLE_BINS)
+	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/*.a $(EXAMPLE_BINS) 
+	rm -rf $(PYTHON)/*egg* $(PYTHON)/MANIFEST.in $(PYTHON)/build
 	@echo "Cleaned compilation artifacts."

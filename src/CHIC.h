@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include "opt_constants.h"
+#include <complex>
 
 
 class CHIC {

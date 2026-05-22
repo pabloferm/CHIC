@@ -1,6 +1,4 @@
 #include "CHIC_EARTH.h"
-// #include "CHIC.h"
-// #include "earth.h"
 #include <cassert>
  
 // =================================================== //
