@@ -13,7 +13,7 @@ C++ library for computing three-flavor neutrino oscillation probabilities and th
 ## Requirements
 
 - Eigen library: https://libeigen.gitlab.io/?title=Main_Page
-(in the following a standard installation path (i.e. /usr/include/eigen3) is assumed)
+Makefile should detect the Eigen installation in the usual directories.
 - Only if building python bindings:
 	- pybind11: https://pybind11.readthedocs.io/en/stable/installing.html
 	- numpy: https://numpy.org/install/

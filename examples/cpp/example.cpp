@@ -1,7 +1,8 @@
 #include "CHIC.h"
+#include <iostream>
 
 int main() {
-    double energy = 0.7;  // GeV
+    double energy = 0.2;  // GeV
     double baseline = 295.;  // km
 
     // CHIC 
@@ -15,14 +16,18 @@ int main() {
     chic.update_th23(0.858701); // theta_23 in rad (49.2 deg)
     chic.update_density(3.0); // g/cm^3
     
+    for (int i=0; i<100; i++) {
     Eigen::Matrix3d prob;
+    double en = energy + i*0.8/100.;
     prob = chic.compute_oscillations(
-        energy, baseline);
-
+        en, baseline);
+    std::cout << en << " " << prob(1,0) << " " << prob(1,1) << " " << prob(1,2) << " " << prob(1,0) + prob(1,1) + prob(1,2)<< std::endl;
+    }
 
     // CHICDIFF 
     CHICDIFF dchic;
     
+    Eigen::Matrix3d prob;
     Eigen::Matrix3d dprob;
     prob = dchic.compute_oscillations(
         energy, baseline);

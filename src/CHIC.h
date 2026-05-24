@@ -5,6 +5,9 @@
 #include "opt_constants.h"
 #include <complex>
 
+// ================================================================= 
+// == Base class for CHIC neutrino oscillation probabilities only == 
+// ================================================================= 
 
 class CHIC {
  public:
@@ -71,7 +74,7 @@ class CHIC {
     double                  get_detH0          () const noexcept { return detH0;           }
     double                  get_flip           () const noexcept { return flip;            }
 
- protected:
+ public:
     static constexpr double EPSILON = 1e-20;
 
     // Scalars for the Hamiltonian
@@ -94,7 +97,7 @@ class CHIC {
     Eigen::Matrix3cd Hs0, Hs;                  // Reduced Hamiltonian
     Eigen::Matrix3cd Hs2, Hs0_2;               // Reduced squared Hamiltonian
     Eigen::Matrix3cd re_Hs0Vs0;      // Vacuum hamiltonian and matter potential product
-    Eigen::Matrix3cd J;                        // Amplitude matrix                  // Amplitude matrix
+    Eigen::Matrix3cd J;                        // Amplitude matrix
     
     // Flag to denote if matrix update is needed.
     bool update_pmns = true;
@@ -111,9 +114,9 @@ class CHIC {
 };
 
 
-// =================================================== \\
-// = Derived class for probabilities and derivatives = \\
-// =================================================== \\
+// =================================================== 
+// = Derived class for probabilities and derivatives = 
+// =================================================== 
 
 class CHICDIFF : public CHIC {
  public:
@@ -141,7 +144,7 @@ class CHICDIFF : public CHIC {
     const Eigen::Matrix3cd& get_Hs2_dHs_Hs2() const noexcept { return Hs2_dHs_Hs2; }
     const Eigen::Matrix3cd& get_diff_amplitude  () const noexcept { return dJ;  } // Derivative of the amplitude    
 
- private:
+ public:
     std::string param0{"none"};
     const Eigen::Vector3d unit = Eigen::Vector3d::Ones(3);
 

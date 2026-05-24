@@ -11,13 +11,13 @@ int main()
     // ------------------------------------- //
     // Set the vacuum oscillation parameters //
     // ------------------------------------- //
-    CHIC chic;
-    chic.update_dcp(-2.2);
+    CHICDIFF chic;
+    chic.update_dcp(4.1);
     chic.update_dm231(2.5e-3);
     chic.update_dm221(7.5e-5);
-    chic.update_th12(0.590500015160318);   // sin^2(th12)=0.31
-    chic.update_th13(0.1418970546041639);   // sin^2(th13)=0.02
-    chic.update_th23(0.8354818739782283);   // sin^2(th23)=0.55
+    chic.update_th12(0.583638);   // sin^2(th12)=0.31
+    chic.update_th13(0.149574);   // sin^2(th13)=0.02
+    chic.update_th23(0.858701);   // sin^2(th23)=0.55
     chic.update_density(3.0);     // g/cm^3
 
     // ------------------------------- //
@@ -57,8 +57,9 @@ int main()
             double s = static_cast<double>(j) / (numPoints - 1);
             double L = Lmin * std::pow(Lmax / Lmin, s);
 
-            auto start = high_resolution_clock::now();
             Eigen::Matrix3d prob = chic.compute_oscillations(E, L);
+            auto start = high_resolution_clock::now();
+            Eigen::Matrix3d dprob = chic.compute_oscillations_derivatives("dm231", E, L);
             auto end   = high_resolution_clock::now();
 
             if (count >= warmup)
@@ -67,9 +68,9 @@ int main()
 
             std::cout << std::scientific << std::setprecision(15)
                       << E << "," << L << ","
-                      << prob(0,0) << "," << prob(1,0) << "," << prob(2,0) << ","
-                      << prob(0,1) << "," << prob(1,1) << "," << prob(2,1) << ","
-                      << prob(0,2) << "," << prob(1,2) << "," << prob(2,2) << "\n";
+                      << dprob(0,0) << "," << dprob(1,0) << "," << dprob(2,0) << ","
+                      << dprob(0,1) << "," << dprob(1,1) << "," << dprob(2,1) << ","
+                      << dprob(0,2) << "," << dprob(1,2) << "," << dprob(2,2) << "\n";
         }
     }
     {
@@ -96,8 +97,9 @@ int main()
         double t = static_cast<double>(i) / (numPoints - 1);
         double E = Emin * std::pow(Emax / Emin, t);
 
-        auto start = high_resolution_clock::now();
         Eigen::Matrix3d prob = chic.compute_oscillations(E, L_fixed);
+        auto start = high_resolution_clock::now();
+        Eigen::Matrix3d dprob = chic.compute_oscillations_derivatives("dm231", E, L_fixed);
         auto end   = high_resolution_clock::now();
 
         if (count >= warmup)
@@ -106,9 +108,9 @@ int main()
 
         std::cout << std::scientific << std::setprecision(15)
                   << E << "," << L_fixed << ","
-                  << prob(0,0) << "," << prob(1,0) << "," << prob(2,0) << ","
-                  << prob(0,1) << "," << prob(1,1) << "," << prob(2,1) << ","
-                  << prob(0,2) << "," << prob(1,2) << "," << prob(2,2) << "\n";
+                  << dprob(0,0) << "," << dprob(1,0) << "," << dprob(2,0) << ","
+                  << dprob(0,1) << "," << dprob(1,1) << "," << dprob(2,1) << ","
+                  << dprob(0,2) << "," << dprob(1,2) << "," << dprob(2,2) << "\n";
     }
     {
         long long effective = count - warmup;
@@ -136,6 +138,7 @@ int main()
 
         auto start = high_resolution_clock::now();
         Eigen::Matrix3d prob = chic.compute_oscillations(E_fixed, L);
+        Eigen::Matrix3d dprob = chic.compute_oscillations_derivatives("dm231", E_fixed, L);
         auto end   = high_resolution_clock::now();
 
         if (count >= warmup)
@@ -147,6 +150,11 @@ int main()
                   << prob(0,0) << "," << prob(1,0) << "," << prob(2,0) << ","
                   << prob(0,1) << "," << prob(1,1) << "," << prob(2,1) << ","
                   << prob(0,2) << "," << prob(1,2) << "," << prob(2,2) << "\n";
+        std::cout << std::scientific << std::setprecision(15)
+                  << E_fixed << "," << L << ","
+                  << dprob(0,0) << "," << dprob(1,0) << "," << dprob(2,0) << ","
+                  << dprob(0,1) << "," << dprob(1,1) << "," << dprob(2,1) << ","
+                  << dprob(0,2) << "," << dprob(1,2) << "," << dprob(2,2) << "\n";
     }
     {
         long long effective = count - warmup;

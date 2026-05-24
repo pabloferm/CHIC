@@ -180,9 +180,9 @@ void CHIC::_amplitude(double E, double L) {
 }
 
 
-// ====================================================================== \\
-// = Derived class for derivative calculations with lazy initialization = \\
-// ====================================================================== \\
+// ====================================================================== 
+// = Derived class for derivative calculations with lazy initialization = 
+// ====================================================================== 
 
 CHICDIFF::CHICDIFF(std::string_view mode,
                    double theta_12,
