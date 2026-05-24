@@ -1,8 +1,8 @@
 [build-system]
 requires = [
-    "setuptools>=68",
+    "setuptools>=64",
     "wheel",
-    "pybind11>=2.12",
+    "pybind11>=2.6",
     # Eigen is header-only and must be installed system-wide.
     # On Fedora/RHEL:  sudo dnf install eigen3-devel
     # On Debian/Ubuntu: sudo apt install libeigen3-dev
@@ -18,7 +18,7 @@ version         = "2.0.0"
 description     = "Python bindings for CHIC — Cayley-Hamilton neutrino oscillation library"
 readme          = "README.md"
 license         = { text = "MIT" }
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 
 # Runtime dependencies (headers are only needed at build time).
 dependencies = [
