@@ -57,6 +57,12 @@ HEADER     = src/CHIC.h
 # Build artifacts
 BUILD_DIR  = build
 LIB_OBJ    = $(BUILD_DIR)/CHIC.o
+LIB_SOURCE = src/CHIC.cpp src/CHIC_EARTH.cpp
+HEADER     = src/CHIC.h src/CHIC_EARTH.h
+
+# C++ build
+BUILD_DIR = build
+LIB_OBJ   = $(BUILD_DIR)/CHIC.o $(BUILD_DIR)/CHIC_EARTH.o
 LIB_TARGET = $(BUILD_DIR)/libchic.a
 
 # Python artifacts
@@ -67,9 +73,15 @@ EGG_PY = bindings/chic.egg-info
 EXAMPLE_DIR  = examples/cpp
 EXAMPLE_BINS = $(EXAMPLE_DIR)/chic_benchmark $(EXAMPLE_DIR)/example $(EXAMPLE_DIR)/chicdiff_benchmark $(EXAMPLE_DIR)/chic_profile $(EXAMPLE_DIR)/chicdiff2_benchmark
 
+# Python
+PYTHON = bindings
+
 # Prevent make from deleting intermediate files (library, objects)
 .SECONDARY:
 
+EXAMPLE_BINS = $(EXAMPLE_DIR)/example $(EXAMPLE_DIR)/test_chicearth $(EXAMPLE_DIR)/speed
+
+.SECONDARY:
 .PHONY: all lib examples clean dirs
 
 all: lib
@@ -84,8 +96,13 @@ $(LIB_TARGET): $(LIB_OBJ)
 	@echo "Creating static library: $@"
 	ar rcs $@ $^
 
-$(LIB_OBJ): $(LIB_SOURCE) $(HEADER) | dirs
-	@echo "Compiling library object: $<"
+# Compile each library object explicitly
+$(BUILD_DIR)/CHIC.o: src/CHIC.cpp $(HEADER) | dirs
+	@echo "Compiling: $<"
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILD_DIR)/CHIC_EARTH.o: src/CHIC_EARTH.cpp $(HEADER) | dirs
+	@echo "Compiling: $<"
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Build all examples

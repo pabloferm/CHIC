@@ -1,6 +1,4 @@
 #include "CHIC.h"
-#include "opt_constants.h"
-#include <complex>
 
 // =================================================================
 // == Base class for CHIC neutrino oscillation probabilities only ==
@@ -203,7 +201,7 @@ Eigen::Matrix3d CHICDIFF::compute_oscillations_derivatives(std::string_view para
     _amplitude(E, L);
 
     param0 = param;
-
+    
     if (param0 == "L") {
         dHs.setZero();
         dJ = std::complex<double>(0.0, - OptConstants::BASELINE_FACTOR) * (Hs*J);
@@ -216,6 +214,12 @@ Eigen::Matrix3d CHICDIFF::compute_oscillations_derivatives(std::string_view para
     return 2.0 * dJ.cwiseProduct(J.conjugate()).real();
 }
 
+void CHICDIFF::compute_hamiltonians_and_derivatives(std::string_view param, double E) {
+    compute_hamiltonians(E);
+    param0 = param;
+    _set_dHs();
+}
+
 void CHICDIFF::_set_dHs() {
     dHs.setZero();
     if      (param0 == "density") { dHs_drho();   }
@@ -226,6 +230,7 @@ void CHICDIFF::_set_dHs() {
     else if (param0 == "th13")    { dHs_dth13();  }
     else if (param0 == "th12")    { dHs_dth12();  }
     else if (param0 == "E")       { dHs_dE();     }
+    else if (param0 == "L")       { dHs.setZero();}
     else {
         throw std::invalid_argument(std::string("Unknown parameter: ") + std::string(param0));
     }
@@ -271,8 +276,8 @@ void CHICDIFF::_amplitude_derivative() {
     cdJ_diag[1] = lambdas.dot(I_prod);       // H dH H
     cdJ_off[0] = prod_lambdas.dot(I_prod);   // dH H
 
-    I_prod = I_ijk * unit;
-    cdJ_diag[2] = unit.dot(I_prod);            // H2 dH H2
+    I_prod = I_ijk * Eigen::Vector3cd::Ones();
+    cdJ_diag[2] = Eigen::Vector3cd::Ones().dot(I_prod);            // H2 dH H2
     cdJ_off[1] = prod_lambdas.dot(I_prod);     // dH H2
     cdJ_off[2] = lambdas.dot(I_prod);          // H dH H2
 

@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include "opt_constants.h"
+#include <complex>
 
 // ================================================================= 
 // == Base class for CHIC neutrino oscillation probabilities only == 
@@ -24,8 +25,10 @@ class CHIC {
 
     // Update dcp
     inline void update_dcp(double delta_cp) {
-        e_idelta = std::exp(std::complex<double>(0, flip * delta_cp));
-        e_midelta = 1.0 / e_idelta;
+        double s, c;
+        __builtin_sincos(flip * delta_cp, &s, &c);
+        e_idelta = std::complex<double>(c, s);
+        e_midelta = std::complex<double>(c, -s);
         update_pmns = true;
     }
     // Update theta_23
@@ -48,6 +51,7 @@ class CHIC {
     inline void update_Ye(double Ye) { 
         Y_e = Ye;      
         update_matter = true; }
+
 
     // Called to compute oscillations
     Eigen::Matrix3d compute_oscillations(double E, double L);
@@ -78,8 +82,7 @@ class CHIC {
     double dm2_21{}, dm2_31{}, V{}, Y_e{}, density{};
     double E0{}, L0{}, inv_2E{}, inv_4E_squared{};
     double flip = 1.0;
-    double Vs2_diag0{}, Vs2_diag1{};
-    double iL{};
+    double Vs2_diag0{}, Vs2_diag1{}, iL{};
     std::complex<double> e_idelta{}, e_midelta{};
     
     // Invariants
@@ -88,10 +91,7 @@ class CHIC {
     // Eigenvalues (lambdas)
     Eigen::Vector3d prod_lambdas, diff_lambdas, lambdas;
     Eigen::Vector3cd exp_lambdas, cJ;
-    
-    const Eigen::Matrix3d identity_cache = Eigen::Matrix3d::Identity();
-    const Eigen::Matrix3d zero_cache = Eigen::Matrix3d::Zero();
-    
+        
     // Pre-computed matrices
     Eigen::Matrix3cd U;                        // PMNS matrix
     Eigen::Matrix3cd Hs0, Hs;                  // Reduced Hamiltonian
@@ -133,8 +133,15 @@ class CHICDIFF : public CHIC {
     
     // Derivative calculation method
     Eigen::Matrix3d compute_oscillations_derivatives(std::string_view param, double E, double L);
+    void compute_hamiltonians_and_derivatives(std::string_view param, double E);
+
     // Access to derivative results
     const Eigen::Matrix3cd& get_diff_hamiltonian() const noexcept { return dHs; } // Derivative of the reduced Hamiltonian
+    const Eigen::Matrix3cd& get_comm_dHsHs() const noexcept { return comm_dHsHs; } // Commutator of derivative and hamiltonian
+    const Eigen::Matrix3cd& get_comm_dHsHs2() const noexcept { return comm_dHsHs2; } // Commutator of derivative and hamiltonian squared
+    const Eigen::Matrix3cd& get_Hs_comm_dHsHs_Hs() const noexcept { return Hs_comm_dHsHs_Hs; }
+    const Eigen::Matrix3cd& get_Hs_dHs_Hs() const noexcept { return Hs_dHs_Hs; }
+    const Eigen::Matrix3cd& get_Hs2_dHs_Hs2() const noexcept { return Hs2_dHs_Hs2; }
     const Eigen::Matrix3cd& get_diff_amplitude  () const noexcept { return dJ;  } // Derivative of the amplitude    
 
  public:

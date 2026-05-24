@@ -1,13 +1,41 @@
 [build-system]
-requires = ["setuptools>=64", "pybind11>=2.6"]
+requires = [
+    "setuptools>=64",
+    "wheel",
+    "pybind11>=2.6",
+    # Eigen is header-only and must be installed system-wide.
+    # On Fedora/RHEL:  sudo dnf install eigen3-devel
+    # On Debian/Ubuntu: sudo apt install libeigen3-dev
+    # On macOS:        brew install eigen
+]
 build-backend = "setuptools.build_meta"
 
+# ── Project metadata ────────────────────────────────────────────────────────
+
 [project]
-name = "chic"
-version = "1.1.0"
-description = "Python bindings for CHIC"
+name            = "pychic"
+version         = "2.0.0"
+description     = "Python bindings for CHIC — Cayley-Hamilton neutrino oscillation library"
+readme          = "README.md"
+license         = { text = "MIT" }
 requires-python = ">=3.8"
-dependencies = ["numpy", "pybind11>=2.6"]
+
+# Runtime dependencies (headers are only needed at build time).
+dependencies = [
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "numpy>=1.24",
+]
+
+# ── Setuptools configuration ─────────────────────────────────────────────────
 
 [tool.setuptools]
-zip-safe = false
+# All compiled extensions are registered in setup.py.
+packages = []
+
+[tool.setuptools.exclude-package-data]
+"*" = ["*.cpp", "*.h", "*.o", "*.a"]
