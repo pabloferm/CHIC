@@ -50,19 +50,15 @@ endif
 
 INCLUDES = $(EIGEN_INCLUDE) -I. -Isrc
 
-# C++ sources
-LIB_SOURCE = src/CHIC.cpp
-HEADER     = src/CHIC.h
-
 # Build artifacts
 BUILD_DIR  = build
 LIB_OBJ    = $(BUILD_DIR)/CHIC.o
-LIB_SOURCE = src/CHIC.cpp src/CHIC_EARTH.cpp
-HEADER     = src/CHIC.h src/CHIC_EARTH.h
+LIB_SOURCE = src/CHIC.cpp src/CHIC_EARTH.cpp src/CHIC_BATCH.cpp
+HEADER     = src/CHIC.h src/CHIC_EARTH.h src/CHIC_BATCH.h
 
 # C++ build
 BUILD_DIR = build
-LIB_OBJ   = $(BUILD_DIR)/CHIC.o $(BUILD_DIR)/CHIC_EARTH.o
+LIB_OBJ   = $(BUILD_DIR)/CHIC.o $(BUILD_DIR)/CHIC_EARTH.o $(BUILD_DIR)/CHIC_BATCH.o
 LIB_TARGET = $(BUILD_DIR)/libchic.a
 
 # Python artifacts
@@ -71,7 +67,7 @@ EGG_PY = bindings/chic.egg-info
 
 # Examples
 EXAMPLE_DIR  = examples/cpp
-EXAMPLE_BINS = $(EXAMPLE_DIR)/chic_benchmark $(EXAMPLE_DIR)/example $(EXAMPLE_DIR)/chicdiff_benchmark $(EXAMPLE_DIR)/chic_profile $(EXAMPLE_DIR)/chicdiff2_benchmark
+EXAMPLE_BINS = $(EXAMPLE_DIR)/chic_benchmark $(EXAMPLE_DIR)/example $(EXAMPLE_DIR)/chicdiff_benchmark $(EXAMPLE_DIR)/chic_profile $(EXAMPLE_DIR)/chicdiff2_benchmark $(EXAMPLE_DIR)/chic_batch_example
 
 # Python
 PYTHON = bindings
@@ -79,7 +75,7 @@ PYTHON = bindings
 # Prevent make from deleting intermediate files (library, objects)
 .SECONDARY:
 
-EXAMPLE_BINS = $(EXAMPLE_DIR)/example $(EXAMPLE_DIR)/test_chicearth $(EXAMPLE_DIR)/speed
+EXAMPLE_BINS = $(EXAMPLE_DIR)/example $(EXAMPLE_DIR)/test_chicearth $(EXAMPLE_DIR)/speed $(EXAMPLE_DIR)/chic_batch_example
 
 .SECONDARY:
 .PHONY: all lib examples clean dirs
@@ -102,6 +98,10 @@ $(BUILD_DIR)/CHIC.o: src/CHIC.cpp $(HEADER) | dirs
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILD_DIR)/CHIC_EARTH.o: src/CHIC_EARTH.cpp $(HEADER) | dirs
+	@echo "Compiling: $<"
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILD_DIR)/CHIC_BATCH.o: src/CHIC_BATCH.cpp $(HEADER) | dirs
 	@echo "Compiling: $<"
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 

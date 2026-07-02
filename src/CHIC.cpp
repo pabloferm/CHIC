@@ -168,6 +168,7 @@ Eigen::Matrix3d CHIC::compute_oscillations(double E, double L) {
     return J.cwiseAbs2();
 }
 
+
 void CHIC::_amplitude(double E, double L) {
     bool recompute = (E != E0);
     if (update_pmns)   { _set_vacuum();  recompute = true; }
@@ -209,6 +210,13 @@ Eigen::Matrix3d CHICDIFF::compute_oscillations_derivatives(std::string_view para
     else {
         _set_dHs();
         _amplitude_derivative();
+        if (param0 == "EL") {
+            Eigen::Matrix3cd dJL = std::complex<double>(0.0, - OptConstants::BASELINE_FACTOR) * (Hs*J);
+            Eigen::Matrix3d ddprob = dJ.cwiseProduct(dJL.conjugate()).real();
+            dJ = std::complex<double>(0.0, - OptConstants::BASELINE_FACTOR) * (-2.0*Hs0/inv_4E_squared * J + Hs*dJ);
+            ddprob += dJ.cwiseProduct(J.conjugate()).real();
+            return 2.0 * ddprob;
+        }
     }
     
     return 2.0 * dJ.cwiseProduct(J.conjugate()).real();
@@ -229,13 +237,13 @@ void CHICDIFF::_set_dHs() {
     else if (param0 == "th23")    { dHs_dth23();  }
     else if (param0 == "th13")    { dHs_dth13();  }
     else if (param0 == "th12")    { dHs_dth12();  }
-    else if (param0 == "E")       { dHs_dE();     }
+    else if ((param0 == "E") || (param0 == "EL")) { dHs_dE();     }
     else if (param0 == "L")       { dHs.setZero();}
     else {
         throw std::invalid_argument(std::string("Unknown parameter: ") + std::string(param0));
     }
 
-    if (param0 == "E") {
+    if ((param0 == "E") || (param0 == "EL")) {
       dHs = -2 * inv_4E_squared * dHs;
     } else if (param0 != "density") {
       dHs = inv_2E * dHs;
